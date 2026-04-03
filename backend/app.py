@@ -63,7 +63,10 @@ def send_sms(to_number, message, msg_type="manual", user_id=None, related_id=Non
     if app.config.get("SMS_DEMO_MODE", True):
         print(f"[SMS DEMO] To: +91{to_number} | {message}")
         log_entry["status"] = "demo_sent"
-        db.sms_logs.insert_one(log_entry)
+        try:
+            db.sms_logs.insert_one(log_entry)
+        except Exception as e:
+            print(f"DB Logging Error (Demo): {e}")
         return {"success": True, "sid": "demo", "demo": True}
 
     try:
@@ -76,13 +79,19 @@ def send_sms(to_number, message, msg_type="manual", user_id=None, related_id=Non
         )
         log_entry["sid"] = msg.sid
         log_entry["status"] = msg.status
-        db.sms_logs.insert_one(log_entry)
+        try:
+            db.sms_logs.insert_one(log_entry)
+        except Exception as e:
+            print(f"DB Logging Error (Live): {e}")
         return {"success": True, "sid": msg.sid}
     except Exception as e:
         print(f"Twilio Error: {e}")
         log_entry["status"] = "failed"
         log_entry["error_code"] = str(e)
-        db.sms_logs.insert_one(log_entry)
+        try:
+            db.sms_logs.insert_one(log_entry)
+        except Exception as db_e:
+            print(f"DB Logging Error (Failure): {db_e}")
         return {"success": False, "error": str(e)}
 
 

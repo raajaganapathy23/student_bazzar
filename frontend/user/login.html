@@ -150,7 +150,7 @@ async function sendOTP() {
     console.error('sendOTP error:', e);
     // Demo mode fallback
     demoOtp = String(Math.floor(100000 + Math.random()*900000));
-    showToast(`OTP: ${demoOtp} (offline demo)`);
+    showToast(`Offline Mode (Technical Error: ${e.message})`);
     document.getElementById('otpSection').classList.remove('hidden');
     document.getElementById('continueBtn').style.display = 'none';
     document.querySelectorAll('.otp-box')[0].focus();
