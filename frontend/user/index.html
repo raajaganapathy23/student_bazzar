@@ -303,7 +303,7 @@ html:not(.dark) .toast{background:#fff;border-color:#E2E8F0;color:#1E293B;box-sh
 
 <script>
 // ═══ CONFIG ═══
-const API = window.location.origin + '/api';
+const API = window.location.origin.includes('http') ? window.location.origin + '/api' : 'https://student-bazzar-app.onrender.com/api';
 let currentPage = 1;
 let currentFilter = 'all';
 let currentSort = 'latest';

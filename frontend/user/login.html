@@ -92,11 +92,12 @@ html:not(.dark) .otp-box{border-color:#E2E8F0}
 </div>
 
 <script>
-const API = window.location.origin + '/api';
+const API = window.location.origin.includes('http') ? window.location.origin + '/api' : 'https://student-bazzar-app.onrender.com/api';
 let authMode = 'register';
 let demoOtp = '';
 
 function showToast(msg) {
+  console.log('Toast:', msg);
   const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
   document.getElementById('toast-container').appendChild(t);
   setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300)},2500);
