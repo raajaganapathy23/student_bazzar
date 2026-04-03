@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Chat — Student Bazar</title>
+<meta name="description" content="Real-time messaging on Student Bazar."/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
+<style>
+body{font-family:'Inter',sans-serif}.dark body{background:#0F172A;color:#E2E8F0}html:not(.dark) body{background:#F8FAFC;color:#1E293B}
+.nav-glass{background:rgba(15,23,42,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(51,65,85,.5)}
+html:not(.dark) .nav-glass{background:rgba(248,250,252,.85);border-bottom:1px solid #E2E8F0}
+.msg-bubble{max-width:75%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;animation:msgIn .2s ease}
+.msg-sent{background:#4F46E5;color:#fff;border-bottom-right-radius:4px;margin-left:auto}
+.msg-received{background:#1E293B;border:1px solid #334155;border-bottom-left-radius:4px}
+html:not(.dark) .msg-received{background:#F1F5F9;border-color:#E2E8F0;color:#1E293B}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:#9CA3AF;display:inline-block;animation:typingBounce .6s infinite alternate}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{to{transform:translateY(-4px);opacity:.5}}
+</style>
+</head>
+<body class="h-screen flex flex-col">
+
+<!-- Nav -->
+<nav class="nav-glass flex-shrink-0 px-4">
+  <div class="max-w-[800px] mx-auto flex items-center justify-between h-14">
+    <a href="/user/" class="text-lg"><i class="fas fa-arrow-left"></i></a>
+    <div class="text-center">
+      <span class="font-heading font-bold text-sm" id="chatTitle">Messages</span>
+      <div class="text-[10px] text-success font-semibold" id="onlineStatus">● Online</div>
+    </div>
+    <button class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-xs" id="chatAvatar">?</button>
+  </div>
+</nav>
+
+<!-- Chat Rooms List -->
+<div id="roomsList" class="flex-1 overflow-y-auto">
+  <div class="max-w-[800px] mx-auto px-4 py-4">
+    <h2 class="font-heading font-bold text-lg mb-4">Conversations</h2>
+    <div id="rooms" class="space-y-2"></div>
+  </div>
+</div>
+
+<!-- Chat Room View -->
+<div id="chatRoom" class="flex-1 flex flex-col hidden">
+  <!-- Product Context -->
+  <div class="px-4 py-2 border-b border-dark-border flex items-center gap-3" id="productContext" style="display:none">
+    <span class="text-2xl" id="ctxEmoji">📦</span>
+    <div class="flex-1 min-w-0"><div class="font-semibold text-xs truncate" id="ctxTitle">Item</div><div class="text-primary font-bold text-xs" id="ctxPrice">₹0</div></div>
+    <button class="text-xs text-primary">View</button>
+  </div>
+
+  <!-- Messages -->
+  <div class="flex-1 overflow-y-auto px-4 py-4" id="messagesContainer">
+    <div class="flex flex-col gap-2" id="messagesList"></div>
+    <div id="typingIndicator" class="hidden mt-2 flex items-center gap-2 text-xs text-gray-500">
+      <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+      <span class="ml-1">typing...</span>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="flex-shrink-0 p-4 border-t border-dark-border nav-glass">
+    <div class="max-w-[800px] mx-auto flex gap-2">
+      <input id="msgInput" type="text" placeholder="Type a message..." class="flex-1 px-4 py-3 rounded-xl border border-dark-border bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" onkeydown="if(event.key==='Enter')sendMessage()"/>
+      <button onclick="sendMessage()" class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/25 hover:bg-primary-dark transition flex-shrink-0">
+        <i class="fas fa-paper-plane text-sm"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user')||'null');
+if (!token || !user) window.location.href = '/user/login.html';
+(function(){const s=localStorage.getItem('sb_theme');if(s==='light')document.documentElement.classList.remove('dark')})();
+
+let currentRoom = null;
+const messages = {};
+
+// Demo rooms
+const demoRooms = [
+  {id:'room1',name:'Arun K',avatar:'A',lastMsg:'Is the book still available?',time:'2m ago',product:{emoji:'📚',title:'Advanced Calculus',price:499},unread:2},
+  {id:'room2',name:'Priya S',avatar:'P',lastMsg:'Can you do ₹40,000?',time:'1h ago',product:{emoji:'💻',title:'MacBook Air M1',price:45000},unread:0},
+  {id:'room3',name:'Rahul V',avatar:'R',lastMsg:'Meet at library gate?',time:'3h ago',product:{emoji:'📱',title:'iPhone 13',price:38000},unread:1},
+];
+
+// Demo messages
+const demoMessages = {
+  room1: [
+    {sender:'other',text:'Hi! Is this book still for sale?',time:'10:30 AM'},
+    {sender:'me',text:'Yes, it\'s available! Barely used.',time:'10:31 AM'},
+    {sender:'other',text:'Great! Can I see it today?',time:'10:32 AM'},
+    {sender:'other',text:'Is the book still available?',time:'10:35 AM'},
+  ],
+  room2: [
+    {sender:'other',text:'Hey, I\'m interested in the MacBook',time:'9:00 AM'},
+    {sender:'me',text:'Sure! It\'s in great condition.',time:'9:05 AM'},
+    {sender:'other',text:'Can you do ₹40,000?',time:'9:10 AM'},
+  ],
+  room3: [
+    {sender:'me',text:'Hi! Want to buy the iPhone?',time:'8:00 AM'},
+    {sender:'other',text:'Yes! What condition is it in?',time:'8:15 AM'},
+    {sender:'me',text:'Like new, 10 months old with box.',time:'8:16 AM'},
+    {sender:'other',text:'Meet at library gate?',time:'8:20 AM'},
+  ]
+};
+
+function renderRooms() {
+  const el = document.getElementById('rooms');
+  el.innerHTML = demoRooms.map(r => `
+    <div onclick="openRoom('${r.id}','${r.name}','${r.avatar}')" class="flex items-center gap-3 p-3 rounded-xl hover:bg-dark-card/50 dark:hover:bg-dark-card cursor-pointer transition">
+      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold flex-shrink-0">${r.avatar}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-sm">${r.name}</span>
+          <span class="text-[10px] text-gray-500">${r.time}</span>
+        </div>
+        <div class="flex justify-between items-center mt-0.5">
+          <p class="text-xs text-gray-500 truncate">${r.lastMsg}</p>
+          ${r.unread?`<span class="w-5 h-5 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-bold">${r.unread}</span>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openRoom(roomId, name, avatar) {
+  currentRoom = roomId;
+  document.getElementById('roomsList').classList.add('hidden');
+  document.getElementById('chatRoom').classList.remove('hidden');
+  document.getElementById('chatTitle').textContent = name;
+  document.getElementById('chatAvatar').textContent = avatar;
+
+  const room = demoRooms.find(r=>r.id===roomId);
+  if (room?.product) {
+    document.getElementById('productContext').style.display = '';
+    document.getElementById('ctxEmoji').textContent = room.product.emoji;
+    document.getElementById('ctxTitle').textContent = room.product.title;
+    document.getElementById('ctxPrice').textContent = '₹' + room.product.price.toLocaleString('en-IN');
+  }
+
+  renderMessages(demoMessages[roomId] || []);
+}
+
+function renderMessages(msgs) {
+  const el = document.getElementById('messagesList');
+  el.innerHTML = msgs.map(m => `
+    <div class="flex ${m.sender==='me'?'justify-end':'justify-start'}">
+      <div class="msg-bubble ${m.sender==='me'?'msg-sent':'msg-received'}">
+        <p>${m.text}</p>
+        <div class="text-[10px] ${m.sender==='me'?'text-indigo-200':'text-gray-500'} mt-1 text-right">${m.time} ${m.sender==='me'?'✓✓':''}</div>
+      </div>
+    </div>
+  `).join('');
+  const container = document.getElementById('messagesContainer');
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const now = new Date();
+  const time = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  if (!demoMessages[currentRoom]) demoMessages[currentRoom] = [];
+  demoMessages[currentRoom].push({sender:'me',text,time});
+  renderMessages(demoMessages[currentRoom]);
+
+  // Simulate reply
+  document.getElementById('typingIndicator').classList.remove('hidden');
+  setTimeout(()=>{
+    document.getElementById('typingIndicator').classList.add('hidden');
+    const replies = ['Sure!','Sounds good 👍','Let me check...','I\'ll get back to you','When can you meet?','Deal! 🤝'];
+    const reply = replies[Math.floor(Math.random()*replies.length)];
+    const replyTime = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    demoMessages[currentRoom].push({sender:'other',text:reply,time:replyTime});
+    renderMessages(demoMessages[currentRoom]);
+  },1500+Math.random()*2000);
+}
+
+// Back button override
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&currentRoom){document.getElementById('chatRoom').classList.add('hidden');document.getElementById('roomsList').classList.remove('hidden');currentRoom=null}});
+
+renderRooms();
+gsap.from('#rooms > div',{y:15,opacity:0,duration:.3,stagger:.06});
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Product — Student Bazar</title>
+<meta name="description" content="View item details on Student Bazar."/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
+<style>body{font-family:'Inter',sans-serif}.dark body{background:#0F172A;color:#E2E8F0}html:not(.dark) body{background:#F8FAFC;color:#1E293B}.nav-glass{background:rgba(15,23,42,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(51,65,85,.5)}html:not(.dark) .nav-glass{background:rgba(248,250,252,.85);border-bottom:1px solid #E2E8F0}.card-hover{transition:transform .25s,box-shadow .25s}.card-hover:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(79,70,229,.15)}#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}.toast{background:#1E293B;border:1px solid #334155;color:#E2E8F0;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:toastIn .3s}@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}</style>
+</head>
+<body class="min-h-screen pb-24">
+<div id="toast-container"></div>
+
+<nav class="nav-glass sticky top-0 z-50 px-4">
+  <div class="max-w-[800px] mx-auto flex items-center justify-between h-14">
+    <button onclick="history.back()" class="text-lg w-10 h-10 flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+    <span class="font-heading font-bold">Item Details</span>
+    <div class="flex gap-2">
+      <button onclick="shareItem()" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-dark-card/50 transition"><i class="fas fa-share-alt"></i></button>
+      <button onclick="toggleFav()" id="favBtn" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-dark-card/50 transition text-gray-400"><i class="fas fa-heart"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-[800px] mx-auto px-4 py-6">
+  <!-- Product Image -->
+  <div class="h-64 md:h-80 rounded-2xl border border-gray-200 dark:border-dark-border flex items-center justify-center text-8xl mb-6 relative" id="productImage" style="background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(245,158,11,.05))">
+    <span id="p-emoji">📦</span>
+    <span id="p-featured" class="absolute top-4 left-4 px-3 py-1 bg-accent text-white text-xs font-bold rounded-lg hidden">FEATURED</span>
+  </div>
+
+  <!-- Price & Title -->
+  <div class="mb-4">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="font-heading font-extrabold text-3xl text-primary" id="p-price">₹0</span>
+      <span id="p-negotiable" class="px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-semibold hidden">Negotiable</span>
+    </div>
+    <h1 class="font-heading font-bold text-xl" id="p-title">Loading...</h1>
+    <div class="flex flex-wrap gap-2 mt-3">
+      <span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold" id="p-category">—</span>
+      <span class="px-3 py-1 rounded-full bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border text-xs font-semibold" id="p-condition">—</span>
+      <span class="px-3 py-1 rounded-full bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border text-xs text-gray-500" id="p-location">—</span>
+    </div>
+  </div>
+
+  <!-- Description -->
+  <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-5 mb-4 shadow-sm">
+    <h3 class="font-semibold text-sm mb-2">Description</h3>
+    <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed" id="p-desc">—</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="flex gap-4 mb-6">
+    <div class="flex-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-3 text-center shadow-sm">
+      <div class="font-bold text-lg" id="p-views">0</div><div class="text-xs text-gray-500">Views</div>
+    </div>
+    <div class="flex-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-3 text-center shadow-sm">
+      <div class="font-bold text-lg" id="p-favs">0</div><div class="text-xs text-gray-500">Favorites</div>
+    </div>
+    <div class="flex-1 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-xl p-3 text-center shadow-sm">
+      <div class="font-bold text-lg" id="p-posted">—</div><div class="text-xs text-gray-500">Posted</div>
+    </div>
+  </div>
+
+  <!-- Seller Card -->
+  <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl p-5 mb-6 shadow-sm">
+    <h3 class="font-semibold text-sm mb-3">Seller</h3>
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-xl" id="s-avatar">?</div>
+      <div class="flex-1">
+        <h4 class="font-semibold" id="s-name">—</h4>
+        <p class="text-xs text-gray-500" id="s-college">—</p>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-accent text-sm"><i class="fas fa-star"></i> <span id="s-rating">—</span></span>
+          <span class="text-xs text-gray-500">· Member since <span id="s-since">—</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="mt-4 mb-8 flex gap-3">
+    <button onclick="chatSeller()" class="flex-1 py-3 border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-border transition text-gray-800 dark:text-gray-200">
+      <i class="fas fa-comment-dots text-primary"></i> Chat
+    </button>
+    <button onclick="buyNow()" class="flex-1 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition flex items-center justify-center gap-2">
+      <i class="fas fa-shopping-cart"></i> Buy Now
+    </button>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user')||'null');
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+let product = null;
+
+(function(){const s=localStorage.getItem('sb_theme');if(s==='light')document.documentElement.classList.remove('dark')})();
+function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300)},2500)}
+
+async function loadProduct() {
+  if (!productId) { showToast('No product ID'); return; }
+  try {
+    const res = await fetch(`${API}/products/${productId}`);
+    product = await res.json();
+    if (res.ok) renderProduct(product);
+    else renderDemo();
+  } catch(e) { renderDemo(); }
+}
+
+function renderProduct(p) {
+  document.title = p.title + ' — Student Bazar';
+  document.getElementById('p-emoji').textContent = p.emoji || '📦';
+  document.getElementById('p-title').textContent = p.title;
+  document.getElementById('p-price').textContent = '₹' + (p.price||0).toLocaleString('en-IN');
+  document.getElementById('p-category').textContent = p.category || '—';
+  document.getElementById('p-condition').textContent = p.condition || '—';
+  document.getElementById('p-location').textContent = (p.city||'') + (p.location?' · '+p.location:'');
+  document.getElementById('p-desc').textContent = p.description || 'No description provided';
+  document.getElementById('p-views').textContent = p.views || 0;
+  document.getElementById('p-favs').textContent = p.favorites || 0;
+  if (p.featured) document.getElementById('p-featured').classList.remove('hidden');
+  if (p.negotiable) document.getElementById('p-negotiable').classList.remove('hidden');
+  if (p.createdAt) {
+    const d = new Date(p.createdAt);
+    const diff = Math.floor((Date.now()-d.getTime())/3600000);
+    document.getElementById('p-posted').textContent = diff < 1?'Just now':diff<24?diff+'h ago':Math.floor(diff/24)+'d ago';
+  }
+  document.getElementById('s-name').textContent = p.sellerName || 'Seller';
+  document.getElementById('s-avatar').textContent = (p.sellerName||'?')[0].toUpperCase();
+  document.getElementById('s-rating').textContent = p.sellerRating || '—';
+  document.getElementById('s-college').textContent = p.location || '—';
+  gsap.from('.max-w-\\[800px\\] > *', {y:20,opacity:0,duration:.3,stagger:.05});
+}
+
+function renderDemo() {
+  renderProduct({title:'Demo Product',price:999,emoji:'📦',category:'Books',condition:'Good',description:'This is a demo product.',views:42,favorites:5,sellerName:'Demo Seller',sellerRating:4.5,location:'Demo College',city:'Mumbai',negotiable:true,featured:false,createdAt:new Date().toISOString()});
+}
+
+function shareItem() { navigator.clipboard?.writeText(window.location.href); showToast('🔗 Link copied!'); }
+function toggleFav() {
+  const btn=document.getElementById('favBtn');
+  btn.classList.toggle('text-danger');btn.classList.toggle('text-gray-400');
+  showToast(btn.classList.contains('text-danger')?'❤️ Added to favorites':'Removed from favorites');
+}
+function chatSeller() { if(!user){window.location.href='/user/login.html';return} showToast('💬 Opening chat...'); setTimeout(()=>window.location.href='/user/chat.html',500); }
+function buyNow() { 
+  if(!user){window.location.href='/user/login.html';return} 
+  const btn = event.currentTarget;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing...';
+  btn.disabled = true;
+  showToast('🛒 Order placed! Redirecting...'); 
+  setTimeout(() => window.location.href = '/user/orders.html', 1500); 
+}
+
+loadProduct();
+</script>
+</body>
+</html>

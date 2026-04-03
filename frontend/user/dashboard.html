@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dashboard — Student Bazar</title>
+<meta name="description" content="Your Student Bazar dashboard — overview of your listings, orders, and coins."/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
+<style>body{font-family:'Inter',sans-serif}.dark body{background:#0F172A;color:#E2E8F0}html:not(.dark) body{background:#F8FAFC;color:#1E293B}.nav-glass{background:rgba(15,23,42,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(51,65,85,.5)}html:not(.dark) .nav-glass{background:rgba(248,250,252,.85);border-bottom:1px solid #E2E8F0}.card-hover{transition:transform .25s,box-shadow .25s}.card-hover:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(79,70,229,.15)}</style>
+</head>
+<body class="min-h-screen pb-20 md:pb-0">
+
+<!-- Nav -->
+<nav class="nav-glass sticky top-0 z-50 px-4 lg:px-8">
+  <div class="max-w-[1200px] mx-auto flex items-center justify-between h-14">
+    <a href="/user/" class="flex items-center gap-2"><div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"><i class="fas fa-shopping-bag text-white text-sm"></i></div><span class="font-heading font-bold hidden sm:block">Student Bazar</span></a>
+    <span class="font-heading font-bold">Dashboard</span>
+    <a href="/user/profile.html" class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-sm" id="navAvatar">?</a>
+  </div>
+</nav>
+
+<div class="max-w-[1200px] mx-auto px-4 lg:px-8 py-8">
+  <!-- Welcome -->
+  <div class="mb-8">
+    <h1 class="font-heading font-extrabold text-2xl mb-1">Welcome back, <span id="userName">Student</span>! 👋</h1>
+    <p class="text-gray-500 text-sm">Here's your marketplace activity overview.</p>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="statsGrid">
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-5 card-hover">
+      <div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><i class="fas fa-box"></i></div></div>
+      <div class="font-heading font-extrabold text-2xl" id="statListings">0</div>
+      <div class="text-xs text-gray-500 mt-1">Active Listings</div>
+    </div>
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-5 card-hover">
+      <div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center text-success"><i class="fas fa-shopping-cart"></i></div></div>
+      <div class="font-heading font-extrabold text-2xl" id="statOrders">0</div>
+      <div class="text-xs text-gray-500 mt-1">Total Orders</div>
+    </div>
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-5 card-hover">
+      <div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent"><i class="fas fa-coins"></i></div></div>
+      <div class="font-heading font-extrabold text-2xl" id="statCoins">0</div>
+      <div class="text-xs text-gray-500 mt-1">Bazar Coins</div>
+    </div>
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-5 card-hover">
+      <div class="flex items-center justify-between mb-3"><div class="w-10 h-10 bg-danger/10 rounded-xl flex items-center justify-center text-danger"><i class="fas fa-star"></i></div></div>
+      <div class="font-heading font-extrabold text-2xl" id="statRating">—</div>
+      <div class="text-xs text-gray-500 mt-1">Your Rating</div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <h2 class="font-heading font-bold text-lg mb-4">Quick Actions</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+    <a href="/user/sell.html" class="flex flex-col items-center gap-2 p-5 rounded-2xl border border-dark-border dark:border-dark-border hover:bg-primary/5 transition"><div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-xl">📸</div><span class="text-sm font-semibold">Sell Item</span></a>
+    <a href="/user/orders.html" class="flex flex-col items-center gap-2 p-5 rounded-2xl border border-dark-border dark:border-dark-border hover:bg-primary/5 transition"><div class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-xl">📦</div><span class="text-sm font-semibold">My Orders</span></a>
+    <a href="/user/chat.html" class="flex flex-col items-center gap-2 p-5 rounded-2xl border border-dark-border dark:border-dark-border hover:bg-primary/5 transition"><div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-xl">💬</div><span class="text-sm font-semibold">Messages</span></a>
+    <a href="/user/profile.html" class="flex flex-col items-center gap-2 p-5 rounded-2xl border border-dark-border dark:border-dark-border hover:bg-primary/5 transition"><div class="w-12 h-12 bg-danger/10 rounded-xl flex items-center justify-center text-xl">👤</div><span class="text-sm font-semibold">Profile</span></a>
+  </div>
+
+  <!-- Recent Listings -->
+  <h2 class="font-heading font-bold text-lg mb-4">Your Listings</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" id="myListings">
+    <div class="text-center py-12 col-span-full"><p class="text-gray-500">Loading...</p></div>
+  </div>
+
+  <!-- Recent Orders -->
+  <h2 class="font-heading font-bold text-lg mb-4">Recent Orders</h2>
+  <div class="space-y-3" id="myOrders">
+    <div class="text-center py-12"><p class="text-gray-500">Loading...</p></div>
+  </div>
+</div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden nav-glass">
+  <div class="flex items-center justify-around py-2">
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-home text-lg"></i><span class="text-[10px] font-semibold">Home</span></a>
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-search text-lg"></i><span class="text-[10px] font-semibold">Search</span></a>
+    <a href="/user/sell.html" class="flex flex-col items-center -mt-5"><div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30"><i class="fas fa-plus text-white text-lg"></i></div></a>
+    <a href="/user/orders.html" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-box text-lg"></i><span class="text-[10px] font-semibold">Orders</span></a>
+    <a href="/user/profile.html" class="flex flex-col items-center gap-0.5 text-primary"><i class="fas fa-user text-lg"></i><span class="text-[10px] font-semibold">Profile</span></a>
+  </div>
+</nav>
+
+<script>
+const API = window.location.origin + '/api';
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user')||'null');
+if (!token || !user) window.location.href = '/user/login.html';
+
+document.getElementById('userName').textContent = user?.firstName || 'Student';
+document.getElementById('navAvatar').textContent = (user?.firstName||'?')[0].toUpperCase();
+document.getElementById('statCoins').textContent = user?.coins || 0;
+document.getElementById('statRating').textContent = user?.rating ? user.rating.toFixed(1) + ' ⭐' : '—';
+
+// Theme
+(function(){const s=localStorage.getItem('sb_theme');if(s==='light')document.documentElement.classList.remove('dark')})();
+
+async function loadDashboard() {
+  const headers = {'Authorization':'Bearer '+token};
+  try {
+    // Listings
+    const lr = await fetch(`${API}/products?seller_id=${user._id}&limit=6`, {headers});
+    const ld = await lr.json();
+    document.getElementById('statListings').textContent = ld.total || 0;
+    const listings = ld.products || [];
+    if (listings.length) {
+      document.getElementById('myListings').innerHTML = listings.map(p=>`
+        <a href="/user/product.html?id=${p._id}" class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-4 flex items-center gap-4 card-hover">
+          <div class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">${p.emoji||'📦'}</div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-sm truncate">${p.title}</h3>
+            <p class="text-primary font-bold text-sm">₹${(p.price||0).toLocaleString('en-IN')}</p>
+            <span class="text-xs text-gray-500">${p.status} · ${p.views||0} views</span>
+          </div>
+        </a>
+      `).join('');
+    } else {
+      document.getElementById('myListings').innerHTML = '<div class="text-center py-10 col-span-full"><p class="text-gray-500 text-sm">No listings yet. <a href="/user/sell.html" class="text-primary font-semibold">Sell your first item →</a></p></div>';
+    }
+
+    // Orders
+    const or = await fetch(`${API}/orders?limit=5`, {headers});
+    const od = await or.json();
+    const orders = od.orders || [];
+    document.getElementById('statOrders').textContent = orders.length;
+    if (orders.length) {
+      document.getElementById('myOrders').innerHTML = orders.map(o=>`
+        <a href="/user/orders.html" class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-4 flex items-center gap-4 card-hover block">
+          <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-xl flex-shrink-0">${o.productEmoji||'📦'}</div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-sm truncate">${o.productTitle}</h3>
+            <p class="text-xs text-gray-500">₹${(o.price||0).toLocaleString('en-IN')} · ${o.sellerName||'Seller'}</p>
+          </div>
+          <span class="px-2 py-1 rounded-full text-[10px] font-bold ${o.status==='complete'?'bg-success/10 text-success':o.status==='cancelled'?'bg-danger/10 text-danger':'bg-accent/10 text-accent'}">${o.status}</span>
+        </a>
+      `).join('');
+    } else {
+      document.getElementById('myOrders').innerHTML = '<div class="text-center py-10"><p class="text-gray-500 text-sm">No orders yet</p></div>';
+    }
+  } catch(e) {
+    document.getElementById('myListings').innerHTML = '<div class="text-center py-10 col-span-full"><p class="text-gray-500 text-sm">Connect to backend to see your data</p></div>';
+    document.getElementById('myOrders').innerHTML = '<div class="text-center py-10"><p class="text-gray-500 text-sm">Connect to backend to see your data</p></div>';
+  }
+}
+loadDashboard();
+gsap.from('#statsGrid > div', {y:30,opacity:0,duration:.4,stagger:.1,ease:'power2.out'});
+</script>
+</body>
+</html>

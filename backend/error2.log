@@ -1,0 +1,33 @@
+﻿python : Traceback (most 
+recent call last):
+At line:1 char:1
++ python app.py 2>&1 | 
+Out-File -FilePath 
+error2.log -Encoding utf8
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (T  
+  raceback (most recent   
+  call last)::String)     
+[], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+  File "C:\Users\Welcome\O
+neDrive\Documents\student 
+bazzar\backend\app.py", 
+line 380, in <module>
+    seed_demo_data()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\Welcome\O
+neDrive\Documents\student 
+bazzar\backend\app.py", 
+line 223, in 
+seed_demo_data
+    if db.users.count_docu
+ments({}) > 0:
+       ^^^^^^^^
+AttributeError: 
+'NoneType' object has no 
+attribute 'users'

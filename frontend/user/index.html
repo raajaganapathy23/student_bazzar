@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Student Bazar — Buy & Sell on Campus</title>
+<meta name="description" content="India's trusted student marketplace. Books, electronics, fashion and more. Trade smart, study more."/>
+<meta property="og:title" content="Student Bazar by Alienware"/>
+<meta property="og:description" content="Second-hand marketplace exclusively for students."/>
+<meta property="og:image" content="/logo.png"/>
+<meta name="robots" content="index, follow"/>
+<meta name="theme-color" content="#4F46E5"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Student Bazar","applicationCategory":"ShoppingApplication"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+tailwind.config={darkMode:'class',theme:{extend:{
+  fontFamily:{heading:['Poppins','sans-serif'],body:['Inter','sans-serif']},
+  colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3',light:'#EEF2FF'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',
+    dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'},light:{bg:'#F8FAFC',card:'#FFFFFF',border:'#E2E8F0'}}
+}}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;transition:background .3s,color .3s}
+.dark body,.dark{background:#0F172A;color:#E2E8F0}
+html:not(.dark) body,html:not(.dark){background:#F8FAFC;color:#1E293B}
+.font-heading{font-family:'Poppins',sans-serif}
+/* Splash */
+#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .8s}
+#splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#splash .overlay{position:relative;z-index:2;text-align:center}
+#splash .progress{width:200px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;margin:30px auto 0}
+#splash .bar{height:100%;background:linear-gradient(90deg,#4F46E5,#10B981);width:0;transition:.1s linear}
+.skip-btn{position:absolute;bottom:30px;right:30px;z-index:3;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 20px;border-radius:999px;cursor:pointer;font-family:'Inter';font-weight:600;font-size:13px;opacity:0;transition:opacity .3s}
+/* Navbar glass */
+.nav-glass{background:rgba(15,23,42,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(51,65,85,.5)}
+html:not(.dark) .nav-glass{background:rgba(248,250,252,.85);border-bottom:1px solid #E2E8F0}
+/* Pulsing dot */
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.5}}
+.pulse-dot{animation:pulse-dot 1.5s infinite}
+/* Card hover */
+.card-hover{transition:transform .25s,box-shadow .25s}
+.card-hover:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(79,70,229,.15)}
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,#1E293B 25%,#334155 37%,#1E293B 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+html:not(.dark) .skeleton{background:linear-gradient(90deg,#E2E8F0 25%,#F1F5F9 37%,#E2E8F0 63%);background-size:400% 100%}
+@keyframes shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
+/* Stats counter */
+.stat-num{font-variant-numeric:tabular-nums}
+/* Scroll */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+html:not(.dark) ::-webkit-scrollbar-thumb{background:#CBD5E1}
+/* Toast */
+#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:#1E293B;border:1px solid #334155;color:#E2E8F0;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:toastIn .3s ease}
+html:not(.dark) .toast{background:#fff;border-color:#E2E8F0;color:#1E293B;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH ═══ -->
+<div id="splash">
+  <video id="splash-video" playsinline muted autoplay>
+    <source src="../intro.mp4" type="video/mp4">
+  </video>
+  <div class="overlay">
+    <div class="font-heading text-4xl font-extrabold text-white" style="text-shadow:0 0 30px rgba(79,70,229,.6)">Student Bazar</div>
+    <p class="text-sm text-gray-400 mt-2 font-medium">Trade Smart. Study More.</p>
+    <div class="progress"><div class="bar" id="splashBar"></div></div>
+  </div>
+  <button class="skip-btn" id="skipBtn" onclick="hideSplash()">Skip →</button>
+</div>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="nav-glass sticky top-0 z-50 px-4 lg:px-8" id="mainNav" style="display:none">
+  <div class="max-w-[1200px] mx-auto flex items-center justify-between h-16 gap-4">
+    <a href="/user/" class="flex items-center gap-2 flex-shrink-0">
+      <img src="../logo.png" alt="Logo" class="h-8 w-auto">
+      <span class="font-heading font-bold text-lg hidden sm:block">Student Bazar</span>
+    </a>
+    <!-- Location pill -->
+    <button class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-dark-border dark:border-dark-border text-sm font-medium" onclick="showToast('📍 Location selector coming soon')">
+      <i class="fas fa-map-marker-alt text-primary text-xs"></i>
+      <span id="navLocation" class="truncate max-w-[120px]">India</span>
+      <i class="fas fa-chevron-down text-xs opacity-50"></i>
+    </button>
+    <!-- Search -->
+    <div class="flex-1 max-w-xl relative">
+      <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input type="text" id="searchInput" placeholder="Search books, electronics, fashion..."
+        class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-body"
+        oninput="debounceSearch(this.value)"/>
+    </div>
+    <!-- Right icons -->
+    <div class="flex items-center gap-3">
+      <button onclick="window.location.href='/user/chat.html'" class="relative p-2 rounded-lg hover:bg-dark-card/50 transition" title="Chat">
+        <i class="fas fa-comment-dots text-lg"></i>
+      </button>
+      <button class="relative p-2 rounded-lg hover:bg-dark-card/50 transition" id="notifBtn" title="Notifications">
+        <i class="fas fa-bell text-lg"></i>
+        <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger rounded-full text-[10px] font-bold flex items-center justify-center text-white">3</span>
+      </button>
+      <a href="/user/profile.html" class="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-dark-card/50 transition" title="Coins">
+        <span class="text-accent font-bold text-sm" id="navCoins">🪙 150</span>
+      </a>
+      <a href="/user/profile.html" class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-sm" id="navAvatar">?</a>
+      <!-- Theme toggle -->
+      <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-dark-card/50 transition" id="themeToggle" title="Toggle theme">
+        <i class="fas fa-moon text-lg"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="heroSection" class="max-w-[1200px] mx-auto px-4 lg:px-8 pt-10 pb-6" style="display:none">
+  <div class="grid lg:grid-cols-2 gap-8 items-center">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4">
+        <span class="w-2 h-2 rounded-full bg-success pulse-dot"></span> Live Marketplace
+      </div>
+      <h1 class="font-heading text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
+        Buy & Sell on <span class="text-primary">Campus</span> — Instantly
+      </h1>
+      <p class="text-gray-400 dark:text-gray-400 text-lg mb-6 leading-relaxed">
+        India's trusted student marketplace. Trade books, electronics, fashion and more with verified students near you.
+      </p>
+      <div class="flex flex-wrap gap-3 mb-8">
+        <a href="/user/sell.html" class="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition flex items-center gap-2">
+          <i class="fas fa-plus"></i> Sell Now
+        </a>
+        <button onclick="document.getElementById('listingsGrid').scrollIntoView({behavior:'smooth'})" class="px-6 py-3 border border-dark-border dark:border-dark-border font-semibold rounded-xl hover:bg-dark-card/50 transition flex items-center gap-2">
+          <i class="fas fa-search"></i> Browse Items
+        </button>
+      </div>
+      <div class="flex gap-6 text-sm">
+        <div><span class="font-heading font-extrabold text-2xl stat-num" data-count="50000">0</span><span class="text-primary font-bold">+</span><p class="text-gray-500 text-xs mt-0.5">Items Listed</p></div>
+        <div><span class="font-heading font-extrabold text-2xl stat-num" data-count="10000">0</span><span class="text-primary font-bold">+</span><p class="text-gray-500 text-xs mt-0.5">Students</p></div>
+        <div><span class="font-heading font-extrabold text-2xl stat-num" data-count="500">0</span><span class="text-primary font-bold">+</span><p class="text-gray-500 text-xs mt-0.5">Colleges</p></div>
+      </div>
+    </div>
+    <div class="hidden lg:flex justify-center">
+      <div class="relative">
+        <div class="w-72 h-80 bg-gradient-to-br from-primary/20 to-accent/10 rounded-3xl border border-dark-border dark:border-dark-border p-6 card-hover" id="heroCard">
+          <div class="text-6xl mb-4">💻</div>
+          <div class="inline-block px-2 py-0.5 bg-accent/20 text-accent text-xs font-bold rounded mb-2">FEATURED</div>
+          <h3 class="font-heading font-bold text-lg">MacBook Air M1</h3>
+          <p class="text-gray-400 text-sm mt-1">8GB/256GB — Like New</p>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="font-heading font-extrabold text-xl">₹45,000</span>
+            <span class="text-xs text-gray-500"><i class="fas fa-star text-accent"></i> 4.8</span>
+          </div>
+          <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+            <div class="w-5 h-5 rounded-full bg-primary/30 flex items-center justify-center text-white text-[10px] font-bold">P</div>
+            Priya S. · BITS Pilani
+          </div>
+        </div>
+        <div class="absolute -top-4 -right-4 w-20 h-20 bg-accent/20 rounded-2xl flex items-center justify-center text-3xl rotate-12">📚</div>
+        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-success/20 rounded-2xl flex items-center justify-center text-2xl -rotate-12">🎸</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CATEGORIES ═══ -->
+<section class="max-w-[1200px] mx-auto px-4 lg:px-8 py-6" id="categoriesSection" style="display:none">
+  <h2 class="font-heading font-bold text-xl mb-4">Browse Categories</h2>
+  <div class="grid grid-cols-4 md:grid-cols-8 gap-3" id="categoriesGrid"></div>
+</section>
+
+<!-- ═══ FILTERS ═══ -->
+<section class="max-w-[1200px] mx-auto px-4 lg:px-8 py-2" id="filtersSection" style="display:none">
+  <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+    <button class="filter-chip active px-4 py-2 rounded-full text-xs font-semibold border transition whitespace-nowrap" data-filter="all" onclick="setFilter('all',this)">All Items</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Books" onclick="setFilter('Books',this)">📚 Books</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Electronics" onclick="setFilter('Electronics',this)">💻 Electronics</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Mobiles" onclick="setFilter('Mobiles',this)">📱 Mobiles</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Fashion" onclick="setFilter('Fashion',this)">👕 Fashion</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Cycles" onclick="setFilter('Cycles',this)">🚲 Cycles</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Lab Gear" onclick="setFilter('Lab Gear',this)">🔬 Lab Gear</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Music" onclick="setFilter('Music',this)">🎸 Music</button>
+    <button class="filter-chip px-4 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border transition whitespace-nowrap" data-filter="Hostel Items" onclick="setFilter('Hostel Items',this)">🏠 Hostel</button>
+    <select class="px-3 py-2 rounded-full text-xs font-semibold border border-dark-border dark:border-dark-border bg-transparent transition" onchange="setSortOrder(this.value)" id="sortSelect">
+      <option value="latest">Latest</option>
+      <option value="price_asc">Price ↑</option>
+      <option value="price_desc">Price ↓</option>
+      <option value="rating">Rating</option>
+    </select>
+  </div>
+</section>
+
+<!-- ═══ LISTINGS GRID ═══ -->
+<section class="max-w-[1200px] mx-auto px-4 lg:px-8 py-6" id="listingsSection" style="display:none">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="font-heading font-bold text-xl">Recently Posted 📦</h2>
+    <span class="text-sm text-gray-500" id="listingCount"></span>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="listingsGrid"></div>
+  <div id="skeletonGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+  <div class="text-center py-8" id="loadMoreWrap" style="display:none">
+    <button onclick="loadMore()" class="px-6 py-2.5 border border-dark-border dark:border-dark-border rounded-xl text-sm font-semibold hover:bg-dark-card/50 transition">Load More</button>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="max-w-[1200px] mx-auto px-4 lg:px-8 py-16" id="howSection" style="display:none">
+  <h2 class="font-heading font-bold text-2xl text-center mb-10">How It Works</h2>
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="text-center p-6 rounded-2xl bg-dark-card/50 dark:bg-dark-card border border-dark-border dark:border-dark-border card-hover">
+      <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">📸</div>
+      <h3 class="font-heading font-bold text-lg mb-2">1. Post Your Item</h3>
+      <p class="text-gray-500 text-sm">Snap a photo, set your price, and list it in seconds.</p>
+    </div>
+    <div class="text-center p-6 rounded-2xl bg-dark-card/50 dark:bg-dark-card border border-dark-border dark:border-dark-border card-hover">
+      <div class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">💬</div>
+      <h3 class="font-heading font-bold text-lg mb-2">2. Chat & Connect</h3>
+      <p class="text-gray-500 text-sm">Message buyers or sellers instantly. Negotiate in real-time.</p>
+    </div>
+    <div class="text-center p-6 rounded-2xl bg-dark-card/50 dark:bg-dark-card border border-dark-border dark:border-dark-border card-hover">
+      <div class="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">🤝</div>
+      <h3 class="font-heading font-bold text-lg mb-2">3. Meet & Trade</h3>
+      <p class="text-gray-500 text-sm">Meet on campus, trade safely, earn coins for rewards.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA BANNER ═══ -->
+<section class="max-w-[1200px] mx-auto px-4 lg:px-8 py-8" id="ctaSection" style="display:none">
+  <div class="bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-8 md:p-12 text-center text-white">
+    <h2 class="font-heading font-extrabold text-2xl md:text-3xl mb-3">Ready to Trade Smart?</h2>
+    <p class="text-indigo-200 mb-6 max-w-lg mx-auto">Join thousands of students buying and selling on campus. Post your first item today and earn 150 free Bazar Coins!</p>
+    <a href="/user/sell.html" class="inline-flex items-center gap-2 px-8 py-3 bg-white text-primary font-bold rounded-xl hover:shadow-lg transition">
+      <i class="fas fa-plus"></i> Start Selling
+    </a>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="border-t border-dark-border dark:border-dark-border mt-8" id="footerSection" style="display:none">
+  <div class="max-w-[1200px] mx-auto px-4 lg:px-8 py-12">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div>
+        <div class="font-heading font-bold text-lg mb-4 flex items-center gap-2">
+          <img src="../logo.png" alt="Logo" class="h-7 w-auto">
+          Student Bazar
+        </div>
+        <p class="text-gray-500 text-sm leading-relaxed">India's #1 student marketplace by Alienware. Trade smart, study more.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-sm">Quick Links</h4>
+        <div class="space-y-2 text-sm text-gray-500">
+          <a href="/user/" class="block hover:text-primary transition">Home</a>
+          <a href="/user/sell.html" class="block hover:text-primary transition">Sell Item</a>
+          <a href="/user/orders.html" class="block hover:text-primary transition">My Orders</a>
+          <a href="/user/chat.html" class="block hover:text-primary transition">Messages</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-sm">Categories</h4>
+        <div class="space-y-2 text-sm text-gray-500">
+          <a href="#" class="block hover:text-primary transition">Books</a>
+          <a href="#" class="block hover:text-primary transition">Electronics</a>
+          <a href="#" class="block hover:text-primary transition">Mobiles</a>
+          <a href="#" class="block hover:text-primary transition">Fashion</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-sm">Support</h4>
+        <div class="space-y-2 text-sm text-gray-500">
+          <a href="#" class="block hover:text-primary transition">Help Center</a>
+          <a href="#" class="block hover:text-primary transition">Safety Tips</a>
+          <a href="#" class="block hover:text-primary transition">Privacy Policy</a>
+          <a href="#" class="block hover:text-primary transition">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-dark-border dark:border-dark-border mt-8 pt-6 text-center text-xs text-gray-600">
+      © 2026 Student Bazar by Alienware 🔥 All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ MOBILE BOTTOM NAV ═══ -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden" id="bottomNav" style="display:none">
+  <div class="nav-glass flex items-center justify-around py-2">
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-primary"><i class="fas fa-home text-lg"></i><span class="text-[10px] font-semibold">Home</span></a>
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-search text-lg"></i><span class="text-[10px] font-semibold">Search</span></a>
+    <a href="/user/sell.html" class="flex flex-col items-center -mt-5"><div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30"><i class="fas fa-plus text-white text-lg"></i></div></a>
+    <a href="/user/orders.html" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-box text-lg"></i><span class="text-[10px] font-semibold">Orders</span></a>
+    <a href="/user/profile.html" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-user text-lg"></i><span class="text-[10px] font-semibold">Profile</span></a>
+  </div>
+</nav>
+
+<div id="toast-container"></div>
+
+<script>
+// ═══ CONFIG ═══
+const API = window.location.origin + '/api';
+let currentPage = 1;
+let currentFilter = 'all';
+let currentSort = 'latest';
+let searchQuery = '';
+let allProducts = [];
+
+// ═══ AUTH STATE ═══
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user') || 'null');
+
+function showToast(msg, dur=2500) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(-10px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); }, dur);
+}
+
+// ═══ SPLASH ═══
+function initSplash() {
+  const video = document.getElementById('splash-video');
+  const bar = document.getElementById('splashBar');
+  const skipBtn = document.getElementById('skipBtn');
+  if (video) {
+    video.play().catch(() => setTimeout(hideSplash, 3000));
+    video.onended = hideSplash;
+    video.ontimeupdate = () => { if(video.duration) bar.style.width = (video.currentTime/video.duration*100)+'%'; };
+    setTimeout(() => { skipBtn.style.opacity = '1'; }, 2000);
+  } else { setTimeout(hideSplash, 2000); }
+}
+
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  splash.style.opacity = '0';
+  setTimeout(() => {
+    splash.style.display = 'none';
+    showMainContent();
+  }, 800);
+}
+
+function showMainContent() {
+  document.getElementById('mainNav').style.display = '';
+  document.getElementById('heroSection').style.display = '';
+  document.getElementById('categoriesSection').style.display = '';
+  document.getElementById('filtersSection').style.display = '';
+  document.getElementById('listingsSection').style.display = '';
+  document.getElementById('howSection').style.display = '';
+  document.getElementById('ctaSection').style.display = '';
+  document.getElementById('footerSection').style.display = '';
+  if (window.innerWidth < 768) document.getElementById('bottomNav').style.display = '';
+  initAnimations();
+  loadProducts();
+  renderCategories();
+  updateUserUI();
+}
+
+// ═══ USER UI ═══
+function updateUserUI() {
+  if (user) {
+    document.getElementById('navAvatar').textContent = user.firstName ? user.firstName[0].toUpperCase() : '?';
+    document.getElementById('navCoins').textContent = '🪙 ' + (user.coins || 0);
+  }
+}
+
+// ═══ THEME ═══
+function toggleTheme() {
+  const html = document.documentElement;
+  html.classList.toggle('dark');
+  const isDark = html.classList.contains('dark');
+  localStorage.setItem('sb_theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-moon text-lg"></i>' : '<i class="fas fa-sun text-lg"></i>';
+}
+(function initTheme() {
+  const saved = localStorage.getItem('sb_theme');
+  if (saved === 'light') document.documentElement.classList.remove('dark');
+  else if (!saved && window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.classList.remove('dark');
+})();
+
+// ═══ CATEGORIES ═══
+const CATEGORIES = [
+  {emoji:'📚',label:'Books'},{emoji:'💻',label:'Electronics'},{emoji:'📱',label:'Mobiles'},{emoji:'👕',label:'Fashion'},
+  {emoji:'🚲',label:'Cycles'},{emoji:'🔬',label:'Lab Gear'},{emoji:'🎸',label:'Music'},{emoji:'🏠',label:'Hostel Items'}
+];
+function renderCategories() {
+  const g = document.getElementById('categoriesGrid');
+  g.innerHTML = CATEGORIES.map(c => `
+    <button onclick="setFilter('${c.label}',null)" class="flex flex-col items-center gap-2 p-3 rounded-2xl border border-dark-border dark:border-dark-border hover:bg-primary/10 hover:border-primary/30 transition group">
+      <span class="text-2xl group-hover:scale-110 transition">${c.emoji}</span>
+      <span class="text-xs font-semibold text-gray-500 group-hover:text-primary transition">${c.label}</span>
+    </button>
+  `).join('');
+}
+
+// ═══ FILTERS ═══
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  currentPage = 1;
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.classList.remove('active','bg-primary','text-white','border-primary');
+    c.classList.add('border-dark-border');
+  });
+  if (btn) {
+    btn.classList.add('active','bg-primary','text-white','border-primary');
+    btn.classList.remove('border-dark-border');
+  } else {
+    const allBtn = document.querySelector(`.filter-chip[data-filter="${filter}"]`);
+    if (allBtn) { allBtn.classList.add('active','bg-primary','text-white','border-primary'); allBtn.classList.remove('border-dark-border'); }
+  }
+  loadProducts();
+}
+function setSortOrder(val) { currentSort = val; currentPage = 1; loadProducts(); }
+
+// ═══ SEARCH ═══
+let searchTimeout;
+function debounceSearch(val) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { searchQuery = val; currentPage = 1; loadProducts(); }, 300);
+}
+
+// ═══ LOAD PRODUCTS ═══
+function showSkeletons() {
+  const g = document.getElementById('skeletonGrid');
+  g.innerHTML = Array(6).fill('').map(() => `
+    <div class="rounded-2xl border border-dark-border dark:border-dark-border overflow-hidden">
+      <div class="h-44 skeleton"></div>
+      <div class="p-4 space-y-3">
+        <div class="h-5 skeleton rounded w-3/4"></div>
+        <div class="h-4 skeleton rounded w-1/2"></div>
+        <div class="h-4 skeleton rounded w-full"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadProducts() {
+  showSkeletons();
+  let url = `${API}/products?page=${currentPage}&limit=12&sort=${currentSort}`;
+  if (currentFilter !== 'all') url += `&category=${encodeURIComponent(currentFilter)}`;
+  if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    document.getElementById('skeletonGrid').innerHTML = '';
+    allProducts = data.products || [];
+    renderProducts(allProducts);
+    document.getElementById('listingCount').textContent = `${data.total || 0} items`;
+    document.getElementById('loadMoreWrap').style.display = (data.page < data.pages) ? '' : 'none';
+  } catch (e) {
+    document.getElementById('skeletonGrid').innerHTML = '';
+    renderDemoProducts();
+  }
+}
+
+async function loadMore() {
+  currentPage++;
+  let url = `${API}/products?page=${currentPage}&limit=12&sort=${currentSort}`;
+  if (currentFilter !== 'all') url += `&category=${encodeURIComponent(currentFilter)}`;
+  if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    allProducts = allProducts.concat(data.products || []);
+    renderProducts(allProducts);
+    document.getElementById('loadMoreWrap').style.display = (data.page < data.pages) ? '' : 'none';
+  } catch(e) {}
+}
+
+// ═══ RENDER PRODUCTS ═══
+function renderProducts(products) {
+  const g = document.getElementById('listingsGrid');
+  if (!products.length) {
+    g.innerHTML = '<div class="col-span-full text-center py-16"><div class="text-5xl mb-4">🔍</div><h3 class="font-heading font-bold text-lg mb-2">No items found</h3><p class="text-gray-500 text-sm">Try a different search or category</p></div>';
+    return;
+  }
+  g.innerHTML = products.map(p => `
+    <a href="/user/product.html?id=${p._id}" class="rounded-2xl border border-dark-border dark:border-dark-border overflow-hidden card-hover block group bg-dark-card/30 dark:bg-dark-card">
+      <div class="h-44 flex items-center justify-center text-6xl relative" style="background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(245,158,11,.05))">
+        ${p.featured ? '<span class="absolute top-3 left-3 px-2 py-0.5 bg-accent text-white text-[10px] font-bold rounded">FEATURED</span>' : ''}
+        <button onclick="event.preventDefault();toggleFav('${p._id}',this)" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-dark-card/80 flex items-center justify-center hover:scale-110 transition ${isFav(p._id)?'text-danger':'text-gray-400'}">
+          <i class="fas fa-heart"></i>
+        </button>
+        ${p.emoji || '📦'}
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-heading font-extrabold text-lg">₹${(p.price || 0).toLocaleString('en-IN')}</span>
+          ${p.negotiable ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-success/10 text-success font-semibold">Negotiable</span>' : ''}
+        </div>
+        <h3 class="font-medium text-sm truncate mb-2 group-hover:text-primary transition">${p.title}</h3>
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <div class="flex items-center gap-1.5">
+            <div class="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">${(p.sellerName||'?')[0]}</div>
+            <span class="truncate max-w-[100px]">${p.sellerName || 'Seller'}</span>
+            <span class="text-accent"><i class="fas fa-star text-[10px]"></i> ${p.sellerRating || '—'}</span>
+          </div>
+          <span>${p.city || ''}</span>
+        </div>
+      </div>
+    </a>
+  `).join('');
+
+  // GSAP stagger
+  gsap.from('#listingsGrid > a', { y: 30, opacity: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
+}
+
+// ═══ DEMO FALLBACK ═══
+function renderDemoProducts() {
+  const demo = [
+    {_id:'1',title:'Advanced Calculus by Thomas',price:499,emoji:'📚',category:'Books',sellerName:'Arun K',sellerRating:4.8,city:'Vellore',negotiable:true,featured:true},
+    {_id:'2',title:'MacBook Air M1 2020',price:45000,emoji:'💻',category:'Electronics',sellerName:'Priya S',sellerRating:4.5,city:'Pilani',negotiable:true,featured:true},
+    {_id:'3',title:'iPhone 13 128GB Blue',price:38000,emoji:'📱',category:'Mobiles',sellerName:'Rahul V',sellerRating:4.9,city:'Trichy',negotiable:false,featured:true},
+    {_id:'4',title:'University Hoodie - VIT',price:599,emoji:'👕',category:'Fashion',sellerName:'Arun K',sellerRating:4.8,city:'Vellore',negotiable:true,featured:false},
+    {_id:'5',title:'Firefox Sports Cycle',price:3500,emoji:'🚲',category:'Cycles',sellerName:'Sneha P',sellerRating:4.2,city:'Hyderabad',negotiable:true,featured:false},
+    {_id:'6',title:'Casio FX-991EX Calculator',price:850,emoji:'🔬',category:'Electronics',sellerName:'Vikram S',sellerRating:4.7,city:'Delhi',negotiable:false,featured:false},
+    {_id:'7',title:'Yamaha F310 Guitar',price:4200,emoji:'🎸',category:'Music',sellerName:'Priya S',sellerRating:4.5,city:'Pilani',negotiable:true,featured:true},
+    {_id:'8',title:'Study Table with Drawer',price:1200,emoji:'🏠',category:'Hostel Items',sellerName:'Sneha P',sellerRating:4.2,city:'Hyderabad',negotiable:true,featured:false},
+    {_id:'9',title:'HP 15s Ryzen 5 Laptop',price:32000,emoji:'💻',category:'Electronics',sellerName:'Vikram S',sellerRating:4.7,city:'Delhi',negotiable:true,featured:true},
+  ];
+  let filtered = demo;
+  if (currentFilter !== 'all') filtered = demo.filter(p => p.category === currentFilter);
+  if (searchQuery) filtered = demo.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  allProducts = filtered;
+  renderProducts(filtered);
+  document.getElementById('listingCount').textContent = filtered.length + ' items';
+}
+
+// ═══ FAVORITES ═══
+function getFavs() { return JSON.parse(localStorage.getItem('sb_favs') || '[]'); }
+function isFav(id) { return getFavs().includes(id); }
+function toggleFav(id, btn) {
+  let favs = getFavs();
+  if (favs.includes(id)) { favs = favs.filter(f => f !== id); btn.classList.remove('text-danger'); btn.classList.add('text-gray-400'); }
+  else { favs.push(id); btn.classList.add('text-danger'); btn.classList.remove('text-gray-400'); showToast('❤️ Added to favorites'); }
+  localStorage.setItem('sb_favs', JSON.stringify(favs));
+  if (token) fetch(`${API}/favorites/${id}`, { method: favs.includes(id)?'POST':'DELETE', headers: {'Authorization':'Bearer '+token} }).catch(()=>{});
+}
+
+// ═══ GSAP ANIMATIONS ═══
+function initAnimations() {
+  gsap.registerPlugin(ScrollTrigger);
+  // Navbar
+  gsap.from('#mainNav', { y: -100, duration: 0.6, ease: 'power2.out' });
+  // Hero
+  gsap.from('#heroSection h1, #heroSection p, #heroSection .flex', { y: 40, opacity: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out', delay: 0.2 });
+  gsap.from('#heroCard', { scale: 0.8, opacity: 0, duration: 0.8, ease: 'back.out(1.5)', delay: 0.5 });
+  // Stats counter
+  document.querySelectorAll('.stat-num').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    ScrollTrigger.create({
+      trigger: el, start: 'top 80%',
+      onEnter: () => { gsap.to(el, { duration: 2, ease:'power1.out',
+        onUpdate: function() { el.textContent = Math.round(this.progress() * target).toLocaleString('en-IN'); }
+      }); }
+    });
+  });
+  // Sections
+  ['#categoriesSection','#howSection','#ctaSection'].forEach(sel => {
+    gsap.from(sel, { scrollTrigger: { trigger: sel, start: 'top 85%' }, y: 40, opacity: 0, duration: 0.6 });
+  });
+}
+
+// ═══ INIT ═══
+window.addEventListener('DOMContentLoaded', initSplash);
+</script>
+</body>
+</html>

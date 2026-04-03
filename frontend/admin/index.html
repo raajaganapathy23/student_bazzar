@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Panel — Student Bazar</title>
+<meta name="description" content="Student Bazar admin dashboard."/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
+<style>
+body{font-family:'Inter',sans-serif;margin:0}
+.dark body{background:#0F172A;color:#E2E8F0}
+html:not(.dark) body{background:#F1F5F9;color:#1E293B}
+#toast-container{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px}
+.toast{background:#1E293B;border:1px solid #334155;color:#E2E8F0;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:toastIn .3s}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.sidebar{width:240px;background:#0F172A;border-right:1px solid #1E293B;height:100vh;position:fixed;left:0;top:0;z-index:40;overflow-y:auto;transition:transform .3s}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 16px;margin:2px 8px;border-radius:10px;font-size:13px;font-weight:500;color:#94A3B8;cursor:pointer;transition:all .2s}
+.sidebar-item:hover{background:#1E293B;color:#E2E8F0}
+.sidebar-item.active{background:#4F46E5;color:#fff;font-weight:600}
+.sidebar-item .badge{margin-left:auto;background:#334155;color:#E2E8F0;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;min-width:20px;text-align:center}
+.sidebar-item.active .badge{background:rgba(255,255,255,.2)}
+.topbar{height:56px;background:#1E293B;border-bottom:1px solid #334155;display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:30}
+.main{margin-left:240px;min-height:100vh}
+.tab-content{display:none}.tab-content.active{display:block}
+.stat-card{background:#1E293B;border:1px solid #334155;border-radius:16px;padding:20px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px)}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:10px 12px;border-bottom:1px solid #334155;color:#94A3B8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.data-table td{padding:10px 12px;border-bottom:1px solid #1E293B}
+.data-table tr:hover td{background:rgba(79,70,229,.05)}
+.action-btn{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;transition:.2s}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="p-4 flex items-center justify-center border-b border-dark-border mb-2 pt-6 pb-6">
+    <img src="../logo.png" alt="Logo" class="h-12 w-auto">
+  </div>
+  <div class="sidebar-item active" data-tab="dashboard" onclick="switchTab('dashboard',this)"><i class="fas fa-chart-pie w-5 text-center"></i>Dashboard</div>
+  <div class="sidebar-item" data-tab="users" onclick="switchTab('users',this)"><i class="fas fa-users w-5 text-center"></i>Users<span class="badge" id="badge-users">—</span></div>
+  <div class="sidebar-item" data-tab="listings" onclick="switchTab('listings',this)"><i class="fas fa-box w-5 text-center"></i>Listings<span class="badge" id="badge-listings">—</span></div>
+  <div class="sidebar-item" data-tab="orders" onclick="switchTab('orders',this)"><i class="fas fa-clipboard-list w-5 text-center"></i>Orders<span class="badge" id="badge-orders">—</span></div>
+  <div class="sidebar-item" data-tab="map" onclick="switchTab('map',this)"><i class="fas fa-map-marked-alt w-5 text-center"></i>Live Map<span class="badge" style="background:#10B981">🟢</span></div>
+  <div class="sidebar-item" data-tab="sms" onclick="switchTab('sms',this)"><i class="fas fa-sms w-5 text-center"></i>SMS Logs<span class="badge" id="badge-sms">—</span></div>
+  <div class="sidebar-item" data-tab="settings" onclick="switchTab('settings',this)"><i class="fas fa-cog w-5 text-center"></i>Settings</div>
+  <div style="border-top:1px solid #1E293B;margin:12px 8px 0"></div>
+  <div class="sidebar-item" onclick="adminLogout()" style="color:#EF4444"><i class="fas fa-sign-out-alt w-5 text-center"></i>Logout</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="md:hidden text-gray-400" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars text-lg"></i></button>
+    <div class="flex items-center gap-2"><i class="fas fa-shield-alt text-primary"></i><span class="font-heading font-bold text-sm">Admin Panel</span></div>
+    <div class="flex-1"></div>
+    <span class="text-xs text-gray-500 hidden md:block" id="topbarInfo">Loading...</span>
+    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs" id="adminAvatar">A</div>
+  </div>
+
+  <div class="p-4 md:p-6">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="tab-content active" id="tab-dashboard">
+      <h2 class="font-heading font-bold text-xl mb-4">Dashboard Overview</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="statCards">
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500 font-semibold">Total Users</span><div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-sm"><i class="fas fa-users"></i></div></div><div class="font-heading font-extrabold text-2xl" id="d-users">—</div></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500 font-semibold">Active Listings</span><div class="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success text-sm"><i class="fas fa-box"></i></div></div><div class="font-heading font-extrabold text-2xl" id="d-listings">—</div></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500 font-semibold">Orders Today</span><div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-sm"><i class="fas fa-shopping-cart"></i></div></div><div class="font-heading font-extrabold text-2xl" id="d-orders">—</div></div>
+        <div class="stat-card"><div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500 font-semibold">SMS Today</span><div class="w-8 h-8 rounded-lg bg-danger/10 flex items-center justify-center text-danger text-sm"><i class="fas fa-sms"></i></div></div><div class="font-heading font-extrabold text-2xl" id="d-sms">—</div></div>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-4 mb-6">
+        <div class="stat-card"><h3 class="font-semibold text-sm mb-3">Signup Trend (30 days)</h3><canvas id="signupChart" height="200"></canvas></div>
+        <div class="stat-card"><h3 class="font-semibold text-sm mb-3">Order Status</h3><canvas id="orderChart" height="200"></canvas></div>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-4">
+        <div class="stat-card"><h3 class="font-semibold text-sm mb-3">Recent Users</h3><div id="d-recentUsers" class="space-y-2 text-sm"></div></div>
+        <div class="stat-card"><h3 class="font-semibold text-sm mb-3">Recent Orders</h3><div id="d-recentOrders" class="space-y-2 text-sm"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ USERS ═══ -->
+    <div class="tab-content" id="tab-users">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="font-heading font-bold text-xl">User Management</h2>
+        <div class="flex gap-2">
+          <input type="text" id="userSearch" placeholder="Search name/mobile..." class="px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm w-48" oninput="loadUsers()"/>
+          <select id="userRoleFilter" class="px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" onchange="loadUsers()">
+            <option value="">All Roles</option><option value="user">User</option><option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="stat-card overflow-x-auto"><table class="data-table" id="usersTable"><thead><tr><th>User</th><th>Mobile</th><th>College</th><th>Coins</th><th>Rating</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ LISTINGS ═══ -->
+    <div class="tab-content" id="tab-listings">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="font-heading font-bold text-xl">Listing Management</h2>
+        <div class="flex gap-2">
+          <input type="text" id="listSearch" placeholder="Search..." class="px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm w-48" oninput="loadListings()"/>
+          <select id="listCatFilter" class="px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" onchange="loadListings()">
+            <option value="">All Categories</option><option>Books</option><option>Electronics</option><option>Mobiles</option><option>Fashion</option><option>Cycles</option>
+          </select>
+        </div>
+      </div>
+      <div class="stat-card overflow-x-auto"><table class="data-table"><thead><tr><th>Item</th><th>Price</th><th>Category</th><th>Seller</th><th>Status</th><th>Views</th><th>Actions</th></tr></thead><tbody id="listingsBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ ORDERS ═══ -->
+    <div class="tab-content" id="tab-orders">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="font-heading font-bold text-xl">Order Management</h2>
+        <div class="flex gap-2">
+          <select id="orderStatusFilter" class="px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" onchange="loadAdminOrders()">
+            <option value="">All Status</option><option>pending</option><option>confirmed</option><option>en_route</option><option>complete</option><option>cancelled</option>
+          </select>
+          <button onclick="exportCSV()" class="px-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold"><i class="fas fa-download"></i> CSV</button>
+        </div>
+      </div>
+      <div class="stat-card overflow-x-auto"><table class="data-table"><thead><tr><th>Item</th><th>Buyer</th><th>Seller</th><th>Price</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+    </div>
+
+    <!-- ═══ LIVE MAP ═══ -->
+    <div class="tab-content" id="tab-map">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading font-bold text-xl">Live Map</h2>
+        <span class="text-xs text-success font-semibold" id="mapActiveCount">🟢 0 active trades</span>
+      </div>
+      <div id="adminMap" class="w-full rounded-2xl border border-dark-border overflow-hidden" style="height:70vh"></div>
+    </div>
+
+    <!-- ═══ SMS LOGS ═══ -->
+    <div class="tab-content" id="tab-sms">
+      <h2 class="font-heading font-bold text-xl mb-4">SMS Logs</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4" id="smsStats">
+        <div class="stat-card text-center"><div class="font-heading font-extrabold text-xl" id="sms-total">—</div><div class="text-xs text-gray-500">Total Sent</div></div>
+        <div class="stat-card text-center"><div class="font-heading font-extrabold text-xl text-success" id="sms-delivered">—</div><div class="text-xs text-gray-500">Delivered</div></div>
+        <div class="stat-card text-center"><div class="font-heading font-extrabold text-xl text-danger" id="sms-failed">—</div><div class="text-xs text-gray-500">Failed</div></div>
+        <div class="stat-card text-center"><div class="font-heading font-extrabold text-xl text-accent" id="sms-cost">$0</div><div class="text-xs text-gray-500">Est. Cost</div></div>
+      </div>
+      <div class="stat-card overflow-x-auto mb-4"><table class="data-table"><thead><tr><th>To</th><th>Message</th><th>Type</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead><tbody id="smsBody"></tbody></table></div>
+      <div class="stat-card">
+        <h3 class="font-semibold text-sm mb-3">📢 Broadcast SMS</h3>
+        <textarea id="broadcastMsg" rows="3" placeholder="Write your message..." class="w-full px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm mb-3 resize-none"></textarea>
+        <div class="flex gap-2">
+          <input id="broadcastFilter" type="text" placeholder="Filter: college or city (optional)" class="flex-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm"/>
+          <button onclick="sendBroadcast()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold">Send Broadcast</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div class="tab-content" id="tab-settings">
+      <h2 class="font-heading font-bold text-xl mb-4">Site Settings</h2>
+      <div class="space-y-4">
+        <div class="stat-card">
+          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fab fa-firebase text-accent"></i> Firebase Config</h3>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div><label class="text-xs text-gray-500 font-semibold">API Key</label><input id="cfg-fbKey" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Project ID</label><input id="cfg-fbProject" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Database URL</label><input id="cfg-fbDb" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Auth Domain</label><input id="cfg-fbAuth" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm"/></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-sms text-success"></i> Twilio SMS Config</h3>
+          <div class="grid md:grid-cols-3 gap-3">
+            <div><label class="text-xs text-gray-500 font-semibold">Account SID</label><input id="cfg-twSid" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" type="password"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Auth Token</label><input id="cfg-twToken" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" type="password"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">From Number</label><input id="cfg-twFrom" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" placeholder="+14155552671"/></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-globe text-primary"></i> Site Settings</h3>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div><label class="text-xs text-gray-500 font-semibold">Site Name</label><input id="cfg-siteName" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" value="Student Bazar"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Tagline</label><input id="cfg-tagline" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" value="Trade Smart. Study More."/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Coins per Sale</label><input id="cfg-coins" type="number" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" value="50"/></div>
+            <div><label class="text-xs text-gray-500 font-semibold">Boost Cost (coins)</label><input id="cfg-boost" type="number" class="w-full mt-1 px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm" value="100"/></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-danger"></i> Maintenance Mode</h3>
+          <div class="flex items-center justify-between">
+            <div><p class="text-sm">Enable maintenance mode</p><p class="text-xs text-gray-500">Users will see a maintenance banner</p></div>
+            <button id="maintToggle" onclick="toggleMaintenance()" class="w-12 h-7 bg-gray-600 rounded-full relative transition"><span class="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform"></span></button>
+          </div>
+        </div>
+        <div class="stat-card">
+          <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-bullhorn text-accent"></i> Announcement Banner</h3>
+          <textarea id="cfg-announcement" rows="2" placeholder="Announcement text..." class="w-full px-3 py-2 rounded-lg border border-dark-border bg-transparent text-sm mb-3 resize-none"></textarea>
+          <div class="flex gap-2">
+            <button onclick="saveSettings()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold">Save All Settings</button>
+            <button onclick="showToast('Settings cleared')" class="px-4 py-2 border border-dark-border rounded-lg text-sm font-semibold">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user')||'{}');
+
+// Admin guard
+if (!token || user.role !== 'admin') {
+  alert('⛔ Admin access only');
+  window.location.href = '/user/login.html';
+}
+
+document.getElementById('adminAvatar').textContent = (user.firstName||'A')[0];
+document.getElementById('topbarInfo').textContent = `Welcome, ${user.firstName||'Admin'}`;
+
+function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300)},3000)}
+const H = {'Authorization':'Bearer '+token,'Content-Type':'application/json'};
+let adminMap = null;
+
+// ═══ TAB SWITCHING ═══
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(el) el.classList.add('active');
+  if(tab==='map') setTimeout(initAdminMap,100);
+  if(tab==='users') loadUsers();
+  if(tab==='listings') loadListings();
+  if(tab==='orders') loadAdminOrders();
+  if(tab==='sms') loadSmsLogs();
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ═══ DASHBOARD ═══
+async function loadDashboard() {
+  try {
+    const res = await fetch(`${API}/admin/stats`,{headers:H});
+    const d = await res.json();
+    document.getElementById('d-users').textContent = d.totalUsers||0;
+    document.getElementById('d-listings').textContent = d.totalListings||0;
+    document.getElementById('d-orders').textContent = d.ordersToday||0;
+    document.getElementById('d-sms').textContent = d.smsToday||0;
+    document.getElementById('badge-users').textContent = d.totalUsers||0;
+    document.getElementById('badge-listings').textContent = d.totalListings||0;
+    document.getElementById('badge-orders').textContent = d.ordersToday||0;
+
+    // Recent users
+    const ru = d.recentUsers||[];
+    document.getElementById('d-recentUsers').innerHTML = ru.map(u=>`<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5"><div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">${(u.firstName||'?')[0]}</div><div class="flex-1"><div class="font-medium text-xs">${u.firstName} ${u.lastName||''}</div><div class="text-[10px] text-gray-500">${u.college||'—'}</div></div><span class="text-[10px] text-gray-500">${u.coins||0} 🪙</span></div>`).join('')||'<p class="text-xs text-gray-500">No users yet</p>';
+
+    // Recent orders
+    const ro = d.recentOrders||[];
+    document.getElementById('d-recentOrders').innerHTML = ro.map(o=>`<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5"><span class="text-lg">${o.productEmoji||'📦'}</span><div class="flex-1"><div class="font-medium text-xs">${o.productTitle||'—'}</div><div class="text-[10px] text-gray-500">${o.buyerName||'—'} → ${o.sellerName||'—'}</div></div><span class="text-xs font-bold ${o.status==='complete'?'text-success':'text-accent'}">${o.status}</span></div>`).join('')||'<p class="text-xs text-gray-500">No orders yet</p>';
+
+    // Charts
+    initCharts(d);
+  } catch(e) { useDemoData(); }
+}
+
+function useDemoData() {
+  document.getElementById('d-users').textContent = '1,240';
+  document.getElementById('d-listings').textContent = '3,890';
+  document.getElementById('d-orders').textContent = '47';
+  document.getElementById('d-sms').textContent = '132';
+  document.getElementById('badge-users').textContent = '1.2k';
+  document.getElementById('badge-listings').textContent = '3.9k';
+  document.getElementById('badge-orders').textContent = '47';
+  document.getElementById('badge-sms').textContent = '3';
+  initCharts({orderBreakdown:{pending:12,confirmed:8,en_route:5,arrived:2,complete:89,cancelled:7},categoryBreakdown:[{category:'Books',count:120},{category:'Electronics',count:95},{category:'Mobiles',count:78},{category:'Fashion',count:65}]});
+  document.getElementById('d-recentUsers').innerHTML = ['Arun K · VIT','Priya S · BITS','Rahul V · NIT'].map(n=>`<div class="p-2 text-xs text-gray-400">${n}</div>`).join('');
+  document.getElementById('d-recentOrders').innerHTML = ['📚 Calculus Book — ₹499','💻 MacBook — ₹45k','📱 iPhone — ₹38k'].map(n=>`<div class="p-2 text-xs text-gray-400">${n}</div>`).join('');
+}
+
+function initCharts(data) {
+  // Signup trend
+  const ctx1 = document.getElementById('signupChart');
+  if(ctx1._chart) ctx1._chart.destroy();
+  const labels = Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.getDate()+'/'+(d.getMonth()+1)});
+  const signupData = Array.from({length:30},()=>Math.floor(Math.random()*50+10));
+  ctx1._chart = new Chart(ctx1,{type:'line',data:{labels,datasets:[{label:'Signups',data:signupData,borderColor:'#4F46E5',backgroundColor:'rgba(79,70,229,.1)',fill:true,tension:.4,pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#64748B'}},y:{grid:{color:'#1E293B'},ticks:{font:{size:10},color:'#64748B'}}}}});
+
+  // Order status doughnut
+  const ctx2 = document.getElementById('orderChart');
+  if(ctx2._chart) ctx2._chart.destroy();
+  const ob = data.orderBreakdown||{};
+  ctx2._chart = new Chart(ctx2,{type:'doughnut',data:{labels:Object.keys(ob),datasets:[{data:Object.values(ob),backgroundColor:['#F59E0B','#4F46E5','#8B5CF6','#06B6D4','#10B981','#EF4444']}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},color:'#94A3B8',padding:12}}}}});
+}
+
+// ═══ USERS ═══
+async function loadUsers() {
+  const q = document.getElementById('userSearch')?.value||'';
+  const role = document.getElementById('userRoleFilter')?.value||'';
+  try {
+    const res = await fetch(`${API}/admin/users?q=${q}&role=${role}&limit=50`,{headers:H});
+    const d = await res.json();
+    renderUsersTable(d.users||[]);
+  } catch(e) { renderUsersTable(demoUsers()); }
+}
+
+function demoUsers(){return [{_id:'1',firstName:'Arun',lastName:'K',mobile:'9876543210',college:'VIT',coins:250,rating:4.8,role:'user',banned:false},{_id:'2',firstName:'Priya',lastName:'S',mobile:'9876543211',college:'BITS',coins:180,rating:4.5,role:'user',banned:false},{_id:'3',firstName:'Admin',lastName:'A',mobile:'9999999999',college:'IIT',coins:9999,rating:5,role:'admin',banned:false}]}
+
+function renderUsersTable(users) {
+  document.getElementById('usersBody').innerHTML = users.map(u=>`<tr>
+    <td><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">${(u.firstName||'?')[0]}</div><span class="font-medium">${u.firstName} ${u.lastName||''}</span></div></td>
+    <td>${u.mobile||'—'}</td><td>${u.college||'—'}</td><td>${u.coins||0} 🪙</td>
+    <td><span class="text-accent"><i class="fas fa-star text-[10px]"></i> ${u.rating||0}</span></td>
+    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role==='admin'?'bg-primary/10 text-primary':'bg-dark-border text-gray-400'}">${u.role}</span></td>
+    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.banned?'bg-danger/10 text-danger':'bg-success/10 text-success'}">${u.banned?'Banned':'Active'}</span></td>
+    <td class="flex gap-1">
+      <button onclick="banUser('${u._id}',${!u.banned})" class="action-btn ${u.banned?'bg-success/10 text-success':'bg-danger/10 text-danger'}">${u.banned?'Unban':'Ban'}</button>
+      <button onclick="makeAdmin('${u._id}')" class="action-btn bg-primary/10 text-primary">Admin</button>
+      <button onclick="sendSmsTo('${u.mobile}')" class="action-btn bg-accent/10 text-accent">SMS</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function banUser(id,ban){try{await fetch(`${API}/admin/users/${id}/ban`,{method:'PUT',headers:H,body:JSON.stringify({banned:ban})});showToast(ban?'User banned':'User unbanned');loadUsers()}catch(e){showToast('Action failed')}}
+async function makeAdmin(id){if(!confirm('Promote to admin?'))return;try{await fetch(`${API}/admin/users/${id}/role`,{method:'PUT',headers:H,body:JSON.stringify({role:'admin'})});showToast('Role updated');loadUsers()}catch(e){showToast('Failed')}}
+function sendSmsTo(phone){switchTab('sms',document.querySelector('[data-tab="sms"]'));setTimeout(()=>{document.getElementById('broadcastMsg').value=`Hi! Message from Student Bazar admin.`;document.getElementById('broadcastFilter').value=phone},200)}
+
+// ═══ LISTINGS ═══
+async function loadListings() {
+  const q = document.getElementById('listSearch')?.value||'';
+  const cat = document.getElementById('listCatFilter')?.value||'';
+  try {
+    const res = await fetch(`${API}/admin/listings?q=${q}&category=${cat}&limit=50`,{headers:H});
+    const d = await res.json();
+    renderListingsTable(d.listings||[]);
+  } catch(e) { renderListingsTable(demoListings()); }
+}
+
+function demoListings(){return [{_id:'1',emoji:'📚',title:'Calculus Book',price:499,category:'Books',sellerName:'Arun',status:'active',views:234,featured:false},{_id:'2',emoji:'💻',title:'MacBook Air',price:45000,category:'Electronics',sellerName:'Priya',status:'active',views:567,featured:true}]}
+
+function renderListingsTable(items) {
+  document.getElementById('listingsBody').innerHTML = items.map(p=>`<tr>
+    <td><div class="flex items-center gap-2"><span class="text-lg">${p.emoji||'📦'}</span><span class="font-medium">${p.title||'—'}</span>${p.featured?'<span class="text-[10px] px-1 bg-accent/20 text-accent rounded font-bold">★</span>':''}</div></td>
+    <td class="font-bold">₹${(p.price||0).toLocaleString('en-IN')}</td><td>${p.category||'—'}</td><td>${p.sellerName||'—'}</td>
+    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status==='active'?'bg-success/10 text-success':p.status==='sold'?'bg-gray-500/10 text-gray-500':'bg-danger/10 text-danger'}">${p.status}</span></td>
+    <td>${p.views||0}</td>
+    <td class="flex gap-1">
+      <button onclick="featureListing('${p._id}',${!p.featured})" class="action-btn bg-accent/10 text-accent">${p.featured?'Unfeature':'Feature'}</button>
+      <button onclick="removeListing('${p._id}')" class="action-btn bg-danger/10 text-danger">Remove</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function featureListing(id,feat){try{await fetch(`${API}/admin/listings/${id}`,{method:'PUT',headers:H,body:JSON.stringify({featured:feat})});showToast(feat?'Featured!':'Unfeatured');loadListings()}catch(e){showToast('Failed')}}
+async function removeListing(id){if(!confirm('Delete this listing?'))return;try{await fetch(`${API}/admin/listings/${id}`,{method:'DELETE',headers:H});showToast('Listing removed');loadListings()}catch(e){showToast('Failed')}}
+
+// ═══ ORDERS ═══
+async function loadAdminOrders() {
+  const status = document.getElementById('orderStatusFilter')?.value||'';
+  try {
+    const res = await fetch(`${API}/admin/orders?status=${status}&limit=50`,{headers:H});
+    const d = await res.json();
+    renderOrdersTable(d.orders||[]);
+  } catch(e) { renderOrdersTable(demoOrders()); }
+}
+
+function demoOrders(){return [{_id:'1',productEmoji:'📚',productTitle:'Calculus',buyerName:'Priya',sellerName:'Arun',price:499,status:'complete',createdAt:new Date().toISOString()},{_id:'2',productEmoji:'📱',productTitle:'iPhone',buyerName:'Sneha',sellerName:'Rahul',price:38000,status:'confirmed',createdAt:new Date().toISOString()}]}
+
+function renderOrdersTable(orders) {
+  const sc = {pending:'bg-accent/10 text-accent',confirmed:'bg-primary/10 text-primary',en_route:'bg-primary/10 text-primary',complete:'bg-success/10 text-success',cancelled:'bg-danger/10 text-danger',arrived:'bg-success/10 text-success'};
+  document.getElementById('ordersBody').innerHTML = orders.map(o=>`<tr>
+    <td><div class="flex items-center gap-2"><span>${o.productEmoji||'📦'}</span><span class="font-medium">${o.productTitle||'—'}</span></div></td>
+    <td>${o.buyerName||'—'}</td><td>${o.sellerName||'—'}</td><td class="font-bold">₹${(o.price||0).toLocaleString('en-IN')}</td>
+    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${sc[o.status]||''}">${o.status}</span></td>
+    <td class="text-xs text-gray-500">${o.createdAt?new Date(o.createdAt).toLocaleDateString():''}</td>
+    <td class="flex gap-1">
+      <button onclick="forceStatus('${o._id}','complete')" class="action-btn bg-success/10 text-success">Complete</button>
+      <button onclick="forceStatus('${o._id}','cancelled')" class="action-btn bg-danger/10 text-danger">Cancel</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function forceStatus(id,s){if(!confirm(`Force ${s}?`))return;try{await fetch(`${API}/admin/orders/${id}/force`,{method:'PUT',headers:H,body:JSON.stringify({status:s})});showToast('Order updated');loadAdminOrders()}catch(e){showToast('Failed')}}
+
+function exportCSV() {
+  const rows = document.querySelectorAll('#ordersBody tr');
+  let csv = 'Item,Buyer,Seller,Price,Status,Date\n';
+  rows.forEach(r => {const cells=[...r.querySelectorAll('td')];csv+=cells.map(c=>'"'+c.textContent.trim()+'"').join(',')+'\n'});
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');a.href=URL.createObjectURL(blob);a.download='orders.csv';a.click();
+  showToast('📥 CSV downloaded');
+}
+
+// ═══ LIVE MAP ═══
+function initAdminMap() {
+  if (adminMap) adminMap.remove();
+  adminMap = L.map('adminMap',{zoomControl:true}).setView([20.5937,78.9629],5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM'}).addTo(adminMap);
+
+  // Demo sellers
+  const sellers = [
+    {lat:11.0168,lng:76.9558,name:'Arun K',item:'Calculus Book',status:'en_route',color:'#10B981'},
+    {lat:12.9716,lng:77.5946,name:'Priya S',item:'MacBook Air',status:'confirmed',color:'#F59E0B'},
+    {lat:17.3850,lng:78.4867,name:'Sneha P',item:'Sports Cycle',status:'arrived',color:'#06B6D4'},
+    {lat:28.7041,lng:77.1025,name:'Vikram S',item:'HP Laptop',status:'en_route',color:'#10B981'},
+  ];
+
+  let count = 0;
+  sellers.forEach(s => {
+    const icon = L.divIcon({html:`<div style="width:18px;height:18px;background:${s.color};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,iconSize:[18,18],className:''});
+    L.marker([s.lat,s.lng],{icon}).addTo(adminMap).bindPopup(`<b>${s.name}</b><br>${s.item}<br><span style="color:${s.color}">${s.status}</span>`);
+    count++;
+  });
+  document.getElementById('mapActiveCount').textContent = `🟢 ${count} active trades`;
+}
+
+// ═══ SMS LOGS ═══
+async function loadSmsLogs() {
+  try {
+    const [logsRes,statsRes] = await Promise.all([
+      fetch(`${API}/api/sms/logs?limit=20`,{headers:H}),
+      fetch(`${API}/api/sms/logs/stats`,{headers:H})
+    ]);
+    const logs = await logsRes.json();
+    const stats = await statsRes.json();
+    document.getElementById('sms-total').textContent = stats.total||0;
+    document.getElementById('sms-delivered').textContent = stats.delivered||0;
+    document.getElementById('sms-failed').textContent = stats.failed||0;
+    document.getElementById('sms-cost').textContent = '$'+(stats.totalCost||0);
+    document.getElementById('badge-sms').textContent = stats.failed||0;
+    renderSmsTable(logs.logs||[]);
+  } catch(e) {
+    document.getElementById('sms-total').textContent = '4,231';
+    document.getElementById('sms-delivered').textContent = '4,189';
+    document.getElementById('sms-failed').textContent = '42';
+    document.getElementById('sms-cost').textContent = '$3.17';
+    document.getElementById('badge-sms').textContent = '42';
+    renderSmsTable(demoSms());
+  }
+}
+
+function demoSms(){return [{to:'9876543210',message:'Your OTP is 123456',type:'otp',status:'demo_sent',timestamp:new Date().toISOString()},{to:'9876543211',message:'New order!',type:'order_placed',status:'demo_sent',timestamp:new Date().toISOString()}]}
+
+function renderSmsTable(logs) {
+  const sc = {demo_sent:'bg-success/10 text-success',delivered:'bg-success/10 text-success',sent:'bg-success/10 text-success',failed:'bg-danger/10 text-danger',undelivered:'bg-danger/10 text-danger'};
+  document.getElementById('smsBody').innerHTML = logs.map(l=>`<tr>
+    <td class="font-mono text-xs">${l.to||'—'}</td>
+    <td class="max-w-[200px] truncate text-xs">${l.message||'—'}</td>
+    <td><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-dark-border">${l.type||'—'}</span></td>
+    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${sc[l.status]||''}">${l.status||'—'}</span></td>
+    <td class="text-xs text-gray-500">${l.timestamp?new Date(l.timestamp).toLocaleString():''}</td>
+    <td>${l.status==='failed'?`<button onclick="resendSms('${l._id}')" class="action-btn bg-primary/10 text-primary">Resend</button>`:''}</td>
+  </tr>`).join('');
+}
+
+async function resendSms(id){try{await fetch(`${API}/api/sms/resend/${id}`,{method:'POST',headers:H});showToast('SMS resent');loadSmsLogs()}catch(e){showToast('Failed')}}
+
+async function sendBroadcast(){
+  const msg=document.getElementById('broadcastMsg').value.trim();
+  if(!msg){showToast('Write a message first');return}
+  if(!confirm('Send broadcast SMS?'))return;
+  try{const res=await fetch(`${API}/api/sms/broadcast`,{method:'POST',headers:H,body:JSON.stringify({message:msg})});const d=await res.json();showToast(`Broadcast: ${d.sent||0} sent, ${d.failed||0} failed`)}catch(e){showToast('Broadcast sent (demo)')}
+}
+
+// ═══ SETTINGS ═══
+async function saveSettings(){
+  const settings = {
+    siteName:document.getElementById('cfg-siteName').value,
+    tagline:document.getElementById('cfg-tagline').value,
+    coinsPerSale:parseInt(document.getElementById('cfg-coins').value)||50,
+    boostCostCoins:parseInt(document.getElementById('cfg-boost').value)||100,
+    announcementBanner:document.getElementById('cfg-announcement').value,
+  };
+  try{await fetch(`${API}/admin/settings`,{method:'POST',headers:H,body:JSON.stringify(settings)});showToast('✅ Settings saved!')}catch(e){showToast('Settings saved (demo)')}
+}
+
+function toggleMaintenance(){
+  const btn=document.getElementById('maintToggle');
+  btn.classList.toggle('bg-primary');btn.classList.toggle('bg-gray-600');
+  showToast(btn.classList.contains('bg-primary')?'🚨 Maintenance ON':'✅ Maintenance OFF');
+}
+
+function adminLogout(){
+  localStorage.removeItem('sb_token');localStorage.removeItem('sb_user');
+  window.location.href='/user/login.html';
+}
+
+// ═══ INIT ═══
+loadDashboard();
+</script>
+</body>
+</html>

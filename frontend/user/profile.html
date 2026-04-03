@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Profile — Student Bazar</title>
+<meta name="description" content="Your profile on Student Bazar."/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
+<style>body{font-family:'Inter',sans-serif}.dark body{background:#0F172A;color:#E2E8F0}html:not(.dark) body{background:#F8FAFC;color:#1E293B}.nav-glass{background:rgba(15,23,42,.8);backdrop-filter:blur(16px);border-bottom:1px solid rgba(51,65,85,.5)}html:not(.dark) .nav-glass{background:rgba(248,250,252,.85);border-bottom:1px solid #E2E8F0}#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}.toast{background:#1E293B;border:1px solid #334155;color:#E2E8F0;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:toastIn .3s}@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}</style>
+</head>
+<body class="min-h-screen pb-20 md:pb-0">
+<div id="toast-container"></div>
+
+<nav class="nav-glass sticky top-0 z-50 px-4">
+  <div class="max-w-[600px] mx-auto flex items-center justify-between h-14">
+    <a href="/user/" class="text-lg"><i class="fas fa-arrow-left"></i></a>
+    <span class="font-heading font-bold">Profile</span>
+    <button onclick="toggleTheme()" id="themeBtn"><i class="fas fa-moon text-lg"></i></button>
+  </div>
+</nav>
+
+<div class="max-w-[600px] mx-auto px-4 py-6">
+  <!-- Avatar -->
+  <div class="text-center mb-6">
+    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold text-4xl mx-auto mb-3 shadow-xl shadow-primary/20" id="pAvatar">?</div>
+    <h2 class="font-heading font-extrabold text-xl" id="pName">Student User</h2>
+    <p class="text-gray-500 text-sm" id="pMobile">+91 xxxxxxxxxx</p>
+    <p class="text-gray-500 text-xs mt-1" id="pCollege">—</p>
+  </div>
+
+  <!-- Coins Card -->
+  <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-5 mb-6 text-white shadow-lg">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-xs font-semibold opacity-80">Bazar Coins Balance</div>
+        <div class="font-heading font-extrabold text-3xl mt-1" id="pCoins">🪙 150</div>
+      </div>
+      <div class="text-right text-xs opacity-80">
+        <div>1 Coin = ₹1</div>
+        <div class="mt-1">Use to boost listings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border rounded-xl p-4 text-center">
+      <div class="font-heading font-extrabold text-xl" id="pRating">—</div>
+      <div class="text-xs text-gray-500 mt-1">⭐ Rating</div>
+    </div>
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border rounded-xl p-4 text-center">
+      <div class="font-heading font-extrabold text-xl" id="pListings">0</div>
+      <div class="text-xs text-gray-500 mt-1">📦 Listings</div>
+    </div>
+    <div class="bg-dark-card dark:bg-dark-card border border-dark-border rounded-xl p-4 text-center">
+      <div class="font-heading font-extrabold text-xl" id="pOrders">0</div>
+      <div class="text-xs text-gray-500 mt-1">🛒 Orders</div>
+    </div>
+  </div>
+
+  <!-- Menu -->
+  <div class="space-y-2">
+    <a href="/user/dashboard.html" class="flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition">
+      <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><i class="fas fa-chart-line"></i></div>
+      <span class="flex-1 font-medium text-sm">Dashboard</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </a>
+    <a href="/user/orders.html" class="flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition">
+      <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success"><i class="fas fa-box"></i></div>
+      <span class="flex-1 font-medium text-sm">My Orders</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </a>
+    <a href="/user/sell.html" class="flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition">
+      <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent"><i class="fas fa-plus"></i></div>
+      <span class="flex-1 font-medium text-sm">Sell an Item</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </a>
+    <a href="/user/chat.html" class="flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition">
+      <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500"><i class="fas fa-comment-dots"></i></div>
+      <span class="flex-1 font-medium text-sm">Messages</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </a>
+    <button onclick="showToast('❤️ Favorites coming soon')" class="w-full flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition text-left">
+      <div class="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center text-danger"><i class="fas fa-heart"></i></div>
+      <span class="flex-1 font-medium text-sm">Favorites</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </button>
+    <button onclick="showToast('📍 Saved addresses coming soon')" class="w-full flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition text-left">
+      <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-map-marker-alt"></i></div>
+      <span class="flex-1 font-medium text-sm">Saved Addresses</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </button>
+    <button onclick="showToast('🔔 Notification settings')" class="w-full flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition text-left">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-500"><i class="fas fa-bell"></i></div>
+      <span class="flex-1 font-medium text-sm">Notifications</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </button>
+    <button onclick="showToast('❓ Help center coming soon')" class="w-full flex items-center gap-4 p-4 rounded-xl border border-dark-border hover:bg-dark-card/50 transition text-left">
+      <div class="w-10 h-10 rounded-xl bg-gray-500/10 flex items-center justify-center text-gray-500"><i class="fas fa-question-circle"></i></div>
+      <span class="flex-1 font-medium text-sm">Help & Support</span><i class="fas fa-chevron-right text-xs text-gray-500"></i>
+    </button>
+    <button onclick="logout()" class="w-full flex items-center gap-4 p-4 rounded-xl border border-danger/30 hover:bg-danger/5 transition text-left">
+      <div class="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center text-danger"><i class="fas fa-sign-out-alt"></i></div>
+      <span class="flex-1 font-medium text-sm text-danger">Logout</span>
+    </button>
+  </div>
+
+  <div class="text-center mt-8 text-xs text-gray-600">© 2026 Student Bazar by Alienware 🔥</div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden nav-glass">
+  <div class="flex items-center justify-around py-2">
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-home text-lg"></i><span class="text-[10px] font-semibold">Home</span></a>
+    <a href="/user/" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-search text-lg"></i><span class="text-[10px] font-semibold">Search</span></a>
+    <a href="/user/sell.html" class="flex flex-col items-center -mt-5"><div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30"><i class="fas fa-plus text-white text-lg"></i></div></a>
+    <a href="/user/orders.html" class="flex flex-col items-center gap-0.5 text-gray-500"><i class="fas fa-box text-lg"></i><span class="text-[10px] font-semibold">Orders</span></a>
+    <a href="/user/profile.html" class="flex flex-col items-center gap-0.5 text-primary"><i class="fas fa-user text-lg"></i><span class="text-[10px] font-semibold">Profile</span></a>
+  </div>
+</nav>
+
+<script>
+const token = localStorage.getItem('sb_token');
+const user = JSON.parse(localStorage.getItem('sb_user')||'null');
+if (!token || !user) window.location.href = '/user/login.html';
+
+function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toast-container').appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300)},2500)}
+
+// Theme
+(function(){const s=localStorage.getItem('sb_theme');if(s==='light')document.documentElement.classList.remove('dark')})();
+function toggleTheme(){
+  document.documentElement.classList.toggle('dark');
+  const d=document.documentElement.classList.contains('dark');
+  localStorage.setItem('sb_theme',d?'dark':'light');
+  document.getElementById('themeBtn').innerHTML=d?'<i class="fas fa-moon text-lg"></i>':'<i class="fas fa-sun text-lg"></i>';
+}
+
+// Populate
+document.getElementById('pAvatar').textContent=(user.firstName||'?')[0].toUpperCase();
+document.getElementById('pName').textContent=`${user.firstName||''} ${user.lastName||''}`.trim();
+document.getElementById('pMobile').textContent='+91 '+user.mobile;
+document.getElementById('pCollege').textContent=[user.college,user.city].filter(Boolean).join(' · ')||'—';
+document.getElementById('pCoins').textContent='🪙 '+(user.coins||0);
+document.getElementById('pRating').textContent=user.rating?user.rating.toFixed(1):'—';
+
+function logout(){
+  localStorage.removeItem('sb_token');
+  localStorage.removeItem('sb_refresh_token');
+  localStorage.removeItem('sb_user');
+  showToast('👋 Logged out');
+  setTimeout(()=>window.location.href='/user/login.html',800);
+}
+
+gsap.from('.max-w-\\[600px\\] > *',{y:15,opacity:0,duration:.3,stagger:.04});
+</script>
+</body>
+</html>
