@@ -79,6 +79,7 @@ def send_sms(to_number, message, msg_type="manual", user_id=None, related_id=Non
         db.sms_logs.insert_one(log_entry)
         return {"success": True, "sid": msg.sid}
     except Exception as e:
+        print(f"Twilio Error: {e}")
         log_entry["status"] = "failed"
         log_entry["error_code"] = str(e)
         db.sms_logs.insert_one(log_entry)
