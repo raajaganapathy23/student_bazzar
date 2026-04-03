@@ -170,16 +170,12 @@ def send_otp():
     }
 
     message = f"Your Student Bazar OTP is {otp}. Valid for 5 minutes. Do not share with anyone. -Alienware"
-    result = sms(mobile, message, msg_type="otp", user_id=None, related_id=None)
-
     if not result.get("success", False):
         print(f"SMS Send Failed: {result.get('error')}")
-        # Always allow OTP during testing even if SMS fails, but report it!
         return jsonify({
-            "message": "OTP delivery failed, but we provided a demo code.",
-            "error": result.get("error"),
-            "demo_otp": otp  # Allow login even if SMS fails for now!
-        }), 200
+            "error": f"Twilio SMS Error: {result.get('error')}",
+            "message": "We could not send the SMS. See the error above."
+        }), 400
 
     return jsonify({
         "message": "OTP sent successfully",
