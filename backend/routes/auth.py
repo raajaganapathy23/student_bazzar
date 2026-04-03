@@ -170,6 +170,8 @@ def send_otp():
     }
 
     message = f"Your Student Bazar OTP is {otp}. Valid for 5 minutes. Do not share with anyone. -Alienware"
+    result = sms(mobile, message, msg_type="otp", user_id=None, related_id=None)
+    
     if not result.get("success", False):
         print(f"SMS Send Failed: {result.get('error')}")
         return jsonify({
