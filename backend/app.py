@@ -1,7 +1,5 @@
-"""
-Student Bazar by Alienware — Flask Backend
-Main application entry point with SocketIO, JWT, CORS, PyMongo, Limiter
-"""
+import eventlet
+eventlet.monkey_patch()
 
 import os
 import json
@@ -27,13 +25,14 @@ from config import Config
 # ════════════════════════════════════════
 app = Flask(__name__, static_folder="../frontend", static_url_path="")
 app.config.from_object(Config)
+app.config["MONGO_CONNECT"] = False  # Critical for Eventlet compatibility
 
 # ── Extensions ──
 cors = CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]},
                             r"/admin/*": {"origins": app.config["CORS_ORIGINS"]}})
 jwt = JWTManager(app)
 mongo = PyMongo(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 limiter = Limiter(get_remote_address, app=app,
                   default_limits=[app.config["RATELIMIT_DEFAULT"]],
                   storage_uri=app.config["RATELIMIT_STORAGE_URI"])
