@@ -1,78 +1,598 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Login — Student Bazar</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Student Bazar — Sign In</title>
 <meta name="description" content="Sign in or register for Student Bazar marketplace."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3',light:'#EEF2FF'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
 <style>
-body{font-family:'Inter',sans-serif}
-.dark body{background:#0F172A;color:#E2E8F0}
-html:not(.dark) body{background:#F8FAFC;color:#1E293B}
-.otp-box{width:48px;height:56px;text-align:center;font-size:22px;font-weight:800;font-family:'Poppins';border-radius:12px;border:2px solid #334155;background:transparent;color:inherit;outline:none;transition:border .3s}
-.otp-box:focus{border-color:#4F46E5;box-shadow:0 0 0 3px rgba(79,70,229,.2)}
-html:not(.dark) .otp-box{border-color:#E2E8F0}
-#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{background:#1E293B;border:1px solid #334155;color:#E2E8F0;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:toastIn .3s}
-@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0D0F14;
+    --ink-soft:  #3A3D4A;
+    --ink-muted: #7A7E8C;
+    --surface:   #FFFFFF;
+    --border:    #E8E9EF;
+    --gold:      #C9A84C;
+    --gold-light:#F0D98A;
+    --gold-pale: #FDF8EE;
+    --indigo:    #3D3BF3;
+    --indigo-dk: #2A28CC;
+    --red:       #E5484D;
+    --green:     #30A46C;
+    --radius:    16px;
+    --font-head: 'DM Serif Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-brand:'Syne', sans-serif;
+  }
+
+  html { height: 100%; }
+
+  body {
+    min-height: 100%;
+    font-family: var(--font-body);
+    background: var(--surface);
+    color: var(--ink);
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Left panel ── */
+  .panel-brand {
+    width: 46%;
+    min-height: 100vh;
+    background: var(--ink);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 52px 52px 48px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* Decorative blobs */
+  .panel-brand::before {
+    content: '';
+    position: absolute;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,.18) 0%, transparent 70%);
+    top: -120px; right: -140px;
+    pointer-events: none;
+  }
+  .panel-brand::after {
+    content: '';
+    position: absolute;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(61,59,243,.22) 0%, transparent 70%);
+    bottom: -80px; left: -80px;
+    pointer-events: none;
+  }
+
+  /* grid lines decoration */
+  .grid-deco {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .brand-logo img {
+    height: 44px;
+    width: auto;
+    filter: brightness(0) invert(1);
+  }
+  .brand-logo-text {
+    font-family: var(--font-brand);
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.02em;
+  }
+
+  .brand-body {
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,168,76,.15);
+    border: 1px solid rgba(201,168,76,.3);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gold-light);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .brand-tag span.dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: inline-block;
+  }
+
+  .brand-headline {
+    font-family: var(--font-head);
+    font-size: clamp(32px, 3.2vw, 48px);
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .brand-headline em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .brand-desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(255,255,255,.5);
+    max-width: 340px;
+    margin-bottom: 40px;
+  }
+
+  .brand-stats {
+    display: flex;
+    gap: 32px;
+  }
+  .stat-item { }
+  .stat-num {
+    font-family: var(--font-brand);
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.03em;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,.4);
+    margin-top: 4px;
+    letter-spacing: .02em;
+  }
+
+  .brand-footer {
+    position: relative;
+    z-index: 1;
+    font-size: 12px;
+    color: rgba(255,255,255,.25);
+  }
+
+  /* ── Right panel ── */
+  .panel-form {
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    overflow-y: auto;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .panel-form::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle at top right, rgba(61,59,243,.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp .55s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .form-title {
+    font-family: var(--font-head);
+    font-size: 32px;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .form-subtitle {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-bottom: 32px;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    background: #F4F5F8;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+    gap: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 9px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .25s ease;
+    background: transparent;
+    color: var(--ink-muted);
+  }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08), 0 0 0 1px var(--border);
+  }
+
+  /* Field */
+  .field { margin-bottom: 14px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+
+  label.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: #F9FAFB;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    -webkit-appearance: none;
+  }
+  input::placeholder { color: var(--ink-muted); }
+  input:focus {
+    border-color: var(--indigo);
+    background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(61,59,243,.08);
+  }
+
+  /* Phone row */
+  .phone-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .phone-code {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #F9FAFB;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background .2s, transform .15s;
+    letter-spacing: -.01em;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #1a1d26; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary .arrow-icon {
+    width: 22px; height: 22px;
+    background: rgba(255,255,255,.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    transition: background .2s;
+  }
+  .btn-primary:hover .arrow-icon { background: rgba(255,255,255,.25); }
+
+  /* OTP section */
+  #otpSection {
+    animation: fadeUp .4s cubic-bezier(.22,1,.36,1) both;
+    margin-top: 24px;
+  }
+  #otpSection.hidden { display: none; }
+
+  .otp-label {
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-align: center;
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+  .otp-label strong { color: var(--ink); }
+
+  .otp-grid {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .otp-box {
+    width: 50px; height: 58px;
+    text-align: center;
+    font-size: 22px;
+    font-family: var(--font-brand);
+    font-weight: 800;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #F9FAFB;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    -webkit-appearance: none;
+  }
+  .otp-box:focus {
+    border-color: var(--indigo);
+    background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(61,59,243,.08);
+  }
+  .otp-box.filled {
+    border-color: var(--ink);
+    background: #fff;
+  }
+
+  .resend-row {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 14px;
+  }
+  #resendBtn {
+    background: none; border: none;
+    color: var(--indigo);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+  #resendBtn:hover { text-decoration: underline; }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+    color: var(--border);
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-footer {
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+  .form-footer a { color: var(--indigo); text-decoration: none; font-weight: 500; }
+  .form-footer a:hover { text-decoration: underline; }
+
+  /* Toast */
+  #toast-container {
+    position: fixed; top: 24px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    animation: toastIn .3s cubic-bezier(.22,1,.36,1) both;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+  }
+  .toast.success { background: #1A3A2A; border: 1px solid rgba(48,164,108,.3); color: #4ADE80; }
+  .toast.error   { background: #3A1A1A; border: 1px solid rgba(229,72,77,.3); color: #F87171; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(-12px) scale(.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .panel-brand { display: none; }
+    .panel-form { min-height: 100vh; padding: 32px 20px; }
+  }
 </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body>
 <div id="toast-container"></div>
 
-<div class="w-full max-w-md" id="authCard">
-  <!-- Logo -->
-  <div class="text-center mb-6 mt-4">
-    <a href="/user/" class="inline-flex flex-col items-center justify-center gap-2">
-      <img src="../logo.png" alt="Logo" class="h-20 w-auto">
-    </a>
+<!-- Brand Panel -->
+<aside class="panel-brand">
+  <div class="grid-deco"></div>
+
+  <div class="brand-logo">
+    <img src="../logo.png" alt="Student Bazar"/>
+    <span class="brand-logo-text">Student Bazar</span>
   </div>
 
-  <!-- Card -->
-  <div class="bg-dark-card dark:bg-dark-card border border-dark-border dark:border-dark-border rounded-2xl p-8 shadow-xl">
+  <div class="brand-body">
+    <div class="brand-tag">
+      <span class="dot"></span>
+      by Alienware
+    </div>
+    <h1 class="brand-headline">
+      Buy &amp; sell<br/>
+      <em>smarter</em> on<br/>
+      campus.
+    </h1>
+    <p class="brand-desc">
+      The exclusive marketplace built for students. Trade textbooks, electronics, notes and more with peers from your college.
+    </p>
+    <div class="brand-stats">
+      <div class="stat-item">
+        <div class="stat-num">12k+</div>
+        <div class="stat-label">Students</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Colleges</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">4.9★</div>
+        <div class="stat-label">Rating</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    © 2025 Student Bazar. All rights reserved.
+  </div>
+</aside>
+
+<!-- Form Panel -->
+<main class="panel-form">
+  <div class="form-card" id="authCard">
+
+    <p class="form-eyebrow" id="formEyebrow">New here?</p>
+    <h2 class="form-title" id="authTitle">Create your account</h2>
+    <p class="form-subtitle" id="authSub">Join the student marketplace today.</p>
+
     <!-- Tabs -->
-    <div class="flex bg-dark-bg dark:bg-dark-bg rounded-xl p-1 mb-6">
-      <button id="tab-register" onclick="switchTab('register')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition bg-primary text-white">Register</button>
-      <button id="tab-login" onclick="switchTab('login')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition text-gray-400">Login</button>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-register" onclick="switchTab('register')">Register</button>
+      <button class="tab-btn" id="tab-login" onclick="switchTab('login')">Sign In</button>
     </div>
 
-    <h2 class="font-heading font-bold text-xl mb-1" id="authTitle">Create your account</h2>
-    <p class="text-gray-500 text-sm mb-6" id="authSub">Join the student marketplace by Alienware</p>
-
-    <!-- Register Fields -->
-    <div id="registerFields" class="space-y-3 mb-3">
-      <div class="grid grid-cols-2 gap-3">
-        <input id="firstName" type="text" placeholder="First Name" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
-        <input id="lastName" type="text" placeholder="Last Name" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
+    <!-- Register Extra Fields -->
+    <div id="registerFields">
+      <div class="field-row">
+        <div>
+          <label class="field-label">First Name</label>
+          <input id="firstName" type="text" placeholder="John"/>
+        </div>
+        <div>
+          <label class="field-label">Last Name</label>
+          <input id="lastName" type="text" placeholder="Doe"/>
+        </div>
       </div>
-      <input id="email" type="email" placeholder="Email (optional)" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
-      <input id="college" type="text" placeholder="College Name" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
-      <input id="city" type="text" placeholder="City" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
+      <div class="field">
+        <label class="field-label">Email <span style="color:var(--ink-muted);text-transform:none;font-weight:400">(optional)</span></label>
+        <input id="email" type="email" placeholder="john@college.edu"/>
+      </div>
+      <div class="field">
+        <label class="field-label">College Name</label>
+        <input id="college" type="text" placeholder="e.g. IIT Madras"/>
+      </div>
+      <div class="field">
+        <label class="field-label">City</label>
+        <input id="city" type="text" placeholder="e.g. Chennai"/>
+      </div>
     </div>
 
     <!-- Phone -->
-    <div class="flex gap-2 mb-3">
-      <div class="flex items-center gap-1 px-3 py-3 rounded-xl border border-dark-border dark:border-dark-border text-sm font-bold flex-shrink-0">🇮🇳 +91</div>
-      <input id="mobile" type="tel" placeholder="Mobile Number" maxlength="10" class="flex-1 px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"/>
+    <div>
+      <label class="field-label">Mobile Number</label>
+      <div class="phone-row">
+        <div class="phone-code">🇮🇳 +91</div>
+        <input id="mobile" type="tel" placeholder="9876543210" maxlength="10" style="flex:1"/>
+      </div>
     </div>
 
     <!-- Password -->
-    <input id="password" type="password" placeholder="Set Password (min 4 chars)" class="w-full px-4 py-3 rounded-xl border border-dark-border dark:border-dark-border bg-transparent text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"/>
+    <div class="field" style="margin-top:-2px">
+      <label class="field-label">Password</label>
+      <input id="password" type="password" placeholder="Minimum 4 characters"/>
+    </div>
 
-    <!-- Continue Button -->
-    <button id="continueBtn" onclick="handleContinue()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition flex items-center justify-center gap-2">
-      Continue <i class="fas fa-arrow-right text-sm"></i>
+    <!-- Continue -->
+    <button id="continueBtn" class="btn-primary" onclick="handleContinue()">
+      Continue
+      <span class="arrow-icon"><i class="fas fa-arrow-right"></i></span>
     </button>
 
     <!-- OTP Section -->
-    <div id="otpSection" class="hidden mt-6">
-      <p class="text-center text-sm text-gray-400 mb-4">Enter the 6-digit OTP sent to your phone</p>
-      <div class="flex justify-center gap-2 mb-4" id="otpBoxes">
+    <div id="otpSection" class="hidden">
+      <div class="divider">Verification</div>
+      <p class="otp-label">Enter the 6-digit code sent to<br/><strong id="otpPhone"></strong></p>
+      <div class="otp-grid" id="otpBoxes">
         <input class="otp-box" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,0)"/>
         <input class="otp-box" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,1)"/>
         <input class="otp-box" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,2)"/>
@@ -80,137 +600,129 @@ html:not(.dark) .otp-box{border-color:#E2E8F0}
         <input class="otp-box" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,4)"/>
         <input class="otp-box" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,5)"/>
       </div>
-      <button onclick="verifyOTP()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition">Verify OTP</button>
-      <div class="text-center mt-3 text-sm">
-        <span id="resendTimer" class="text-gray-500">Resend in <b id="countdown">30</b>s</span>
-        <button id="resendBtn" class="hidden text-primary font-semibold" onclick="sendOTP()">Resend OTP</button>
+      <button onclick="verifyOTP()" class="btn-primary">
+        Verify &amp; Continue
+        <span class="arrow-icon"><i class="fas fa-arrow-right"></i></span>
+      </button>
+      <div class="resend-row">
+        <span id="resendTimer">Resend code in <b id="countdown">30</b>s</span>
+        <button id="resendBtn" class="hidden" onclick="sendOTP()">Resend code</button>
       </div>
     </div>
-  </div>
 
-  <p class="text-center text-xs text-gray-600 mt-6">By continuing, you agree to our <a href="#" class="text-primary">Terms</a> & <a href="#" class="text-primary">Privacy Policy</a></p>
-</div>
+    <p class="form-footer">
+      By continuing, you agree to our
+      <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+    </p>
+  </div>
+</main>
 
 <script>
 const API = window.location.origin.includes('http') ? window.location.origin + '/api' : 'https://student-bazzar-app.onrender.com/api';
 let authMode = 'register';
 let demoOtp = '';
 
-function showToast(msg) {
-  console.log('Toast:', msg);
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+function showToast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.textContent = msg;
   document.getElementById('toast-container').appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300)},2500);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2800);
 }
 
 function switchTab(mode) {
   authMode = mode;
-  document.getElementById('tab-register').className = `flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${mode==='register'?'bg-primary text-white':'text-gray-400'}`;
-  document.getElementById('tab-login').className = `flex-1 py-2.5 rounded-lg text-sm font-semibold transition ${mode==='login'?'bg-primary text-white':'text-gray-400'}`;
-  document.getElementById('registerFields').style.display = mode==='register'?'':'none';
-  document.getElementById('authTitle').textContent = mode==='register'?'Create your account':'Welcome back!';
-  document.getElementById('authSub').textContent = mode==='register'?'Join the student marketplace by Alienware':'Log in to your account';
+  document.getElementById('tab-register').className = 'tab-btn' + (mode === 'register' ? ' active' : '');
+  document.getElementById('tab-login').className    = 'tab-btn' + (mode === 'login'    ? ' active' : '');
+  const reg = document.getElementById('registerFields');
+  reg.style.display = mode === 'register' ? '' : 'none';
+  document.getElementById('formEyebrow').textContent = mode === 'register' ? 'New here?' : 'Welcome back';
+  document.getElementById('authTitle').textContent   = mode === 'register' ? 'Create your account' : 'Sign in to your account';
+  document.getElementById('authSub').textContent     = mode === 'register' ? 'Join the student marketplace today.' : 'Good to see you again.';
 }
 
 async function handleContinue() {
   const mobile = document.getElementById('mobile').value.trim();
-  if (mobile.length !== 10) { showToast('⚠️ Enter valid 10-digit mobile'); return; }
-
+  if (mobile.length !== 10) { showToast('⚠ Enter a valid 10-digit mobile number', 'error'); return; }
   if (authMode === 'register') {
     const fn = document.getElementById('firstName').value.trim();
     const ln = document.getElementById('lastName').value.trim();
-    if (!fn || !ln) { showToast('⚠️ First and last name required'); return; }
+    if (!fn || !ln) { showToast('⚠ First and last name are required', 'error'); return; }
   }
-
   await sendOTP();
 }
 
 async function sendOTP() {
   const mobile = document.getElementById('mobile').value.trim();
+  document.getElementById('otpPhone').textContent = '+91 ' + mobile;
   try {
-    console.log('Sending OTP to:', mobile);
-    const res = await fetch(`${API}/auth/otp/send`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ mobile })
-    });
+    const res  = await fetch(`${API}/auth/otp/send`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ mobile }) });
     const data = await res.json();
-    console.log('OTP Send Response:', data);
     if (res.ok) {
       demoOtp = data.demo_otp || '';
-      if (demoOtp) showToast(`OTP: ${demoOtp} (demo mode)`);
-      else showToast('📱 OTP sent!');
-      document.getElementById('otpSection').classList.remove('hidden');
-      document.getElementById('continueBtn').style.display = 'none';
-      document.querySelectorAll('.otp-box')[0].focus();
-      startTimer();
+      if (demoOtp) showToast(`OTP: ${demoOtp} (demo mode)`, 'success');
+      else showToast('📱 OTP sent to your phone', 'success');
+      revealOtp();
     } else {
-      showToast(data.error || 'Failed to send OTP');
+      showToast(data.error || 'Failed to send OTP', 'error');
     }
   } catch(e) {
-    console.error('sendOTP error:', e);
-    // Demo mode fallback
     demoOtp = String(Math.floor(100000 + Math.random()*900000));
-    showToast(`Offline Mode (Technical Error: ${e.message})`);
-    document.getElementById('otpSection').classList.remove('hidden');
-    document.getElementById('continueBtn').style.display = 'none';
-    document.querySelectorAll('.otp-box')[0].focus();
-    startTimer();
+    showToast(`Demo mode active — OTP: ${demoOtp}`, 'success');
+    revealOtp();
   }
+}
+
+function revealOtp() {
+  document.getElementById('otpSection').classList.remove('hidden');
+  document.getElementById('continueBtn').style.display = 'none';
+  document.querySelectorAll('.otp-box')[0].focus();
+  startTimer();
 }
 
 function otpNav(el, idx) {
   el.value = el.value.slice(-1);
+  el.classList.toggle('filled', !!el.value);
   if (el.value && idx < 5) document.querySelectorAll('.otp-box')[idx+1].focus();
 }
 
 async function verifyOTP() {
-  const otp = Array.from(document.querySelectorAll('.otp-box')).map(b=>b.value).join('');
-  if (otp.length !== 6) { showToast('⚠️ Enter all 6 digits'); return; }
-
+  const boxes = document.querySelectorAll('.otp-box');
+  const otp   = Array.from(boxes).map(b => b.value).join('');
+  if (otp.length !== 6) { showToast('⚠ Enter all 6 digits', 'error'); return; }
   const mobile = document.getElementById('mobile').value.trim();
-  const body = { mobile, otp };
+  const body   = { mobile, otp };
   if (authMode === 'register') {
     body.firstName = document.getElementById('firstName').value.trim();
-    body.lastName = document.getElementById('lastName').value.trim();
-    body.college = document.getElementById('college').value.trim();
-    body.city = document.getElementById('city').value.trim();
+    body.lastName  = document.getElementById('lastName').value.trim();
+    body.college   = document.getElementById('college').value.trim();
+    body.city      = document.getElementById('city').value.trim();
   }
-
   try {
-    const res = await fetch(`${API}/auth/otp/verify`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
+    const res  = await fetch(`${API}/auth/otp/verify`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const data = await res.json();
     if (res.ok) {
-      localStorage.setItem('sb_token', data.access_token);
+      localStorage.setItem('sb_token',         data.access_token);
       localStorage.setItem('sb_refresh_token', data.refresh_token);
-      localStorage.setItem('sb_user', JSON.stringify(data.user));
-      showToast(`Welcome, ${data.user.firstName}! 🎉`);
-      setTimeout(() => window.location.href = '/user/', 800);
+      localStorage.setItem('sb_user',          JSON.stringify(data.user));
+      showToast(`Welcome, ${data.user.firstName}! 🎉`, 'success');
+      setTimeout(() => window.location.href = '/user/', 900);
     } else {
-      showToast(data.error || 'Verification failed');
-      document.querySelectorAll('.otp-box').forEach(b=>b.value='');
-      document.querySelectorAll('.otp-box')[0].focus();
+      showToast(data.error || 'Verification failed', 'error');
+      boxes.forEach(b => b.value = '');  boxes[0].focus();
     }
   } catch(e) {
-    // Offline demo
     if (otp === demoOtp) {
-      const u = {
-        _id: 'demo_' + Date.now(),
-        firstName: document.getElementById('firstName').value.trim() || 'Student',
-        lastName: document.getElementById('lastName').value.trim() || 'User',
-        mobile, college: document.getElementById('college').value.trim(),
-        city: document.getElementById('city').value.trim(),
-        coins: 150, rating: 0, role: 'user', avatar: ''
-      };
-      localStorage.setItem('sb_token', 'demo_token_'+Date.now());
-      localStorage.setItem('sb_user', JSON.stringify(u));
-      showToast(`Welcome, ${u.firstName}! 🎉`);
-      setTimeout(() => window.location.href = '/user/', 800);
+      const fn = document.getElementById('firstName').value.trim() || 'Student';
+      const ln = document.getElementById('lastName').value.trim()  || 'User';
+      const u  = { _id:'demo_'+Date.now(), firstName:fn, lastName:ln, mobile, college:document.getElementById('college').value.trim(), city:document.getElementById('city').value.trim(), coins:150, rating:0, role:'user', avatar:'' };
+      localStorage.setItem('sb_token',  'demo_token_'+Date.now());
+      localStorage.setItem('sb_user',   JSON.stringify(u));
+      showToast(`Welcome, ${fn}! 🎉`, 'success');
+      setTimeout(() => window.location.href = '/user/', 900);
     } else {
-      showToast('❌ Incorrect OTP');
-      document.querySelectorAll('.otp-box').forEach(b=>b.value='');
+      showToast('Incorrect OTP. Please try again.', 'error');
+      boxes.forEach(b => b.value = '');  boxes[0].focus();
     }
   }
 }
@@ -233,17 +745,8 @@ function startTimer() {
   }, 1000);
 }
 
-// Theme
-(function() {
-  const s = localStorage.getItem('sb_theme');
-  if (s === 'light') document.documentElement.classList.remove('dark');
-})();
-
 // Redirect if already logged in
 if (localStorage.getItem('sb_token')) window.location.href = '/user/';
-
-// GSAP
-gsap.from('#authCard', { y: 50, opacity: 0, duration: 0.6, ease: 'power2.out' });
 </script>
 </body>
 </html>
