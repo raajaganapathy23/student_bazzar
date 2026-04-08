@@ -190,24 +190,17 @@ def send_otp():
     result = current_app.send_sms(mobile, message, msg_type="otp", user_id=None, related_id=None)
 
     sms_sent = result.get("success", False)
-    is_demo  = result.get("demo", False)
 
     if not sms_sent:
-        # Twilio failed (wrong credentials, trial limit, etc.)
-        # Log but DO NOT block the user — fall back to showing OTP in response
         error_msg = result.get("error", "Unknown SMS error")
-        print(f"[SMS FALLBACK] Twilio failed: {error_msg} — returning OTP in response for mobile {mobile}")
+        print(f"[SMS FALLBACK] Twilio failed: {error_msg} — using demo OTP for mobile {mobile}")
 
-        return jsonify({
-            "message": "OTP generated (SMS delivery failed — use the code below)",
-            "demo_otp": otp,   # Always return OTP so user can log in
-            "sms_error": error_msg
-        }), 200
-
-    # SMS sent successfully (either real Twilio or demo mode)
+    # ALWAYS return the demo_otp so the UI can show it to the user.
+    # This ensures the system always works regardless of SMS/Twilio status.
     return jsonify({
-        "message": "OTP sent successfully",
-        "demo_otp": otp if (current_app.config.get("SMS_DEMO_MODE") or is_demo) else None
+        "message": "OTP sent" if sms_sent else "OTP generated (SMS unavailable — use the code below)",
+        "demo_otp": otp,   # Always included so user can always log in
+        "sms_delivered": sms_sent
     }), 200
 
 
