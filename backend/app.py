@@ -1,5 +1,11 @@
-import eventlet
-eventlet.monkey_patch()
+import sys
+try:
+    import eventlet
+    eventlet.monkey_patch()
+    ASYNC_MODE = "eventlet"
+except Exception as e:
+    print(f"Eventlet failed to start, falling back to threading: {e}")
+    ASYNC_MODE = "threading"
 
 import os
 import json
@@ -32,7 +38,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]},
                             r"/admin/*": {"origins": app.config["CORS_ORIGINS"]}})
 jwt = JWTManager(app)
 mongo = PyMongo(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=ASYNC_MODE)
 limiter = Limiter(get_remote_address, app=app,
                   default_limits=[app.config["RATELIMIT_DEFAULT"]],
                   storage_uri=app.config["RATELIMIT_STORAGE_URI"])

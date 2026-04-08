@@ -18,6 +18,16 @@ auth_bp = Blueprint("auth", __name__)
 # In-memory OTP store (production: use Redis)
 otp_store = {}  # {mobile: {otp, expires, attempts}}
 
+def validate_password(password):
+    """Enforce alphanumeric password with at least 8 chars."""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long."
+    if not any(c.isalpha() for c in password):
+        return False, "Password must contain at least one letter."
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one number."
+    return True, ""
+
 def get_db():
     from app import db
     return db
@@ -47,7 +57,14 @@ def register():
     if db.users.find_one({"mobile": mobile}):
         return jsonify({"error": "Mobile number already registered"}), 409
 
-    password = data.get("password", "1234")
+    password = data.get("password")
+    if not password:
+        return jsonify({"error": "Password is required"}), 400
+    
+    ok, msg = validate_password(password)
+    if not ok:
+        return jsonify({"error": msg}), 400
+
     pw_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     now = datetime.now(timezone.utc)
@@ -227,9 +244,14 @@ def verify_otp():
         role = user["role"]
     else:
         # Auto-register on OTP verify if user doesn't exist
+        password = data.get("password", "1234")
+        ok, msg = validate_password(password)
+        if not ok:
+            return jsonify({"error": msg}), 400
+            
         first_name = data.get("firstName", "Student")
         last_name = data.get("lastName", "User")
-        pw_hash = bcrypt.hashpw("1234".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        pw_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         now = datetime.now(timezone.utc)
         new_user = {
             "firstName": first_name, "lastName": last_name,
