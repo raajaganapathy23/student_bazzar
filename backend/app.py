@@ -145,7 +145,11 @@ def serve_intro():
 
 @app.route("/logo.png")
 def serve_logo():
-    return app.send_static_file("logo.png")
+    import os
+    from flask import send_file
+    # Logo is at project root, not inside frontend/
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logo.png')
+    return send_file(logo_path, mimetype='image/png')
 
 # ════════════════════════════════════════
 # SocketIO Events — Real-time Chat
