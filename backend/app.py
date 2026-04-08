@@ -113,6 +113,7 @@ from routes.orders import orders_bp
 from routes.sms import sms_bp
 from routes.admin import admin_bp
 from routes.tracking import tracking_bp
+from routes.chat import chat_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(products_bp)
@@ -120,6 +121,7 @@ app.register_blueprint(orders_bp)
 app.register_blueprint(sms_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(tracking_bp)
+app.register_blueprint(chat_bp)
 
 # ════════════════════════════════════════
 # Static File Serving (Frontend)

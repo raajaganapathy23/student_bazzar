@@ -148,14 +148,47 @@ function toggleFav() {
   btn.classList.toggle('text-danger');btn.classList.toggle('text-gray-400');
   showToast(btn.classList.contains('text-danger')?'❤️ Added to favorites':'Removed from favorites');
 }
-function chatSeller() { if(!user){window.location.href='/user/login.html';return} showToast('💬 Opening chat...'); setTimeout(()=>window.location.href='/user/chat.html',500); }
-function buyNow() { 
+function chatSeller() { 
   if(!user){window.location.href='/user/login.html';return} 
+  if(user._id === product.sellerId){ showToast('You cannot chat with yourself.'); return; }
+  showToast('💬 Opening chat...'); 
+  setTimeout(()=>window.location.href=`/user/chat.html?seller=${product.sellerId}&product=${product._id}`,500); 
+}
+async function buyNow() { 
+  if(!user){window.location.href='/user/login.html';return} 
+  if(user._id === product.sellerId){ showToast('You cannot buy your own item.'); return; }
+
   const btn = event.currentTarget;
+  const originalHtml = btn.innerHTML;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing...';
   btn.disabled = true;
-  showToast('🛒 Order placed! Redirecting...'); 
-  setTimeout(() => window.location.href = '/user/orders.html', 1500); 
+
+  try {
+    const res = await fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        productId: product._id,
+        offeredPrice: product.price,
+        meetupPoint: 'To be decided in chat',
+        instructions: ''
+      })
+    });
+    
+    const data = await res.json();
+    if (res.ok) {
+      showToast('🛒 Order placed! Seller notified.'); 
+      setTimeout(() => window.location.href = '/user/orders.html', 1500); 
+    } else {
+      showToast('Failed to place order: ' + (data.error || 'Unknown error'));
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
+    }
+  } catch (e) {
+    showToast('Network error placing order');
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+  }
 }
 
 loadProduct();

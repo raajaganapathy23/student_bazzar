@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{heading:['Poppins'],body:['Inter']},colors:{primary:{DEFAULT:'#4F46E5',dark:'#3730A3'},accent:'#F59E0B',success:'#10B981',danger:'#EF4444',dark:{bg:'#0F172A',card:'#1E293B',border:'#334155'}}}}}</script>
 <style>
 body{font-family:'Inter',sans-serif}.dark body{background:#0F172A;color:#E2E8F0}html:not(.dark) body{background:#F8FAFC;color:#1E293B}
@@ -82,83 +83,163 @@ if (!token || !user) window.location.href = '/user/login.html';
 (function(){const s=localStorage.getItem('sb_theme');if(s==='light')document.documentElement.classList.remove('dark')})();
 
 let currentRoom = null;
+let currentReceiver = null;
+let currentProduct = null;
 const messages = {};
 
-// Demo rooms
-const demoRooms = [
-  {id:'room1',name:'Arun K',avatar:'A',lastMsg:'Is the book still available?',time:'2m ago',product:{emoji:'📚',title:'Advanced Calculus',price:499},unread:2},
-  {id:'room2',name:'Priya S',avatar:'P',lastMsg:'Can you do ₹40,000?',time:'1h ago',product:{emoji:'💻',title:'MacBook Air M1',price:45000},unread:0},
-  {id:'room3',name:'Rahul V',avatar:'R',lastMsg:'Meet at library gate?',time:'3h ago',product:{emoji:'📱',title:'iPhone 13',price:38000},unread:1},
-];
+// Parse query params to auto-open chat if launched from product page
+const searchParams = new URLSearchParams(window.location.search);
+const initSeller = searchParams.get('seller');
+const initProduct = searchParams.get('product');
 
-// Demo messages
-const demoMessages = {
-  room1: [
-    {sender:'other',text:'Hi! Is this book still for sale?',time:'10:30 AM'},
-    {sender:'me',text:'Yes, it\'s available! Barely used.',time:'10:31 AM'},
-    {sender:'other',text:'Great! Can I see it today?',time:'10:32 AM'},
-    {sender:'other',text:'Is the book still available?',time:'10:35 AM'},
-  ],
-  room2: [
-    {sender:'other',text:'Hey, I\'m interested in the MacBook',time:'9:00 AM'},
-    {sender:'me',text:'Sure! It\'s in great condition.',time:'9:05 AM'},
-    {sender:'other',text:'Can you do ₹40,000?',time:'9:10 AM'},
-  ],
-  room3: [
-    {sender:'me',text:'Hi! Want to buy the iPhone?',time:'8:00 AM'},
-    {sender:'other',text:'Yes! What condition is it in?',time:'8:15 AM'},
-    {sender:'me',text:'Like new, 10 months old with box.',time:'8:16 AM'},
-    {sender:'other',text:'Meet at library gate?',time:'8:20 AM'},
-  ]
-};
+// Initialize Socket
+const socket = io(window.location.origin, {
+  auth: { token: token },
+  transports: ['websocket', 'polling']
+});
 
-function renderRooms() {
-  const el = document.getElementById('rooms');
-  el.innerHTML = demoRooms.map(r => `
-    <div onclick="openRoom('${r.id}','${r.name}','${r.avatar}')" class="flex items-center gap-3 p-3 rounded-xl hover:bg-dark-card/50 dark:hover:bg-dark-card cursor-pointer transition">
-      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold flex-shrink-0">${r.avatar}</div>
-      <div class="flex-1 min-w-0">
-        <div class="flex justify-between items-center">
-          <span class="font-semibold text-sm">${r.name}</span>
-          <span class="text-[10px] text-gray-500">${r.time}</span>
-        </div>
-        <div class="flex justify-between items-center mt-0.5">
-          <p class="text-xs text-gray-500 truncate">${r.lastMsg}</p>
-          ${r.unread?`<span class="w-5 h-5 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-bold">${r.unread}</span>`:''}
-        </div>
-      </div>
-    </div>
-  `).join('');
+socket.on('connect', () => {
+    loadRooms();
+});
+
+socket.on('receive_message', (msg) => {
+    if (msg.roomId === currentRoom) {
+        if (!messages[currentRoom]) messages[currentRoom] = [];
+        messages[currentRoom].push({
+            id: msg._id,
+            senderId: msg.senderId,
+            text: msg.text,
+            timestamp: msg.timestamp
+        });
+        renderMessages(messages[currentRoom]);
+        socket.emit("message_read", { room_id: currentRoom, message_id: msg._id });
+    } else {
+        loadRooms(); // refresh unread count
+    }
+});
+
+socket.on('user_typing', (data) => {
+    if(data.user_id === currentReceiver) {
+        document.getElementById('typingIndicator').classList.remove('hidden');
+        clearTimeout(window.typingTimeout);
+        window.typingTimeout = setTimeout(() => {
+            document.getElementById('typingIndicator').classList.add('hidden');
+        }, 3000);
+    }
+});
+
+async function loadRooms() {
+    try {
+        const res = await fetch(`${API}/chat/rooms`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        let roomsHtml = data.rooms.map(r => {
+            const time = r.lastMessage.timestamp ? new Date(r.lastMessage.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+            // Make sure product object is properly stringified without quotes breaking HTML
+            let encodedProduct = 'null';
+            if (r.product) {
+                encodedProduct = "'" + JSON.stringify(r.product).replace(/'/g, "&apos;") + "'";
+            }
+            return `
+            <div onclick="openRoom('${r.roomId}', '${r.otherUser.id}', '${r.otherUser.name.replace(/'/g, "\\'")}', '${r.otherUser.avatar}', ${encodedProduct})" class="flex items-center gap-3 p-3 rounded-xl hover:bg-dark-card/50 dark:hover:bg-dark-card cursor-pointer transition">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-bold flex-shrink-0">${r.otherUser.avatar}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center">
+                  <span class="font-semibold text-sm">${r.otherUser.name}</span>
+                  <span class="text-[10px] text-gray-500">${time}</span>
+                </div>
+                <div class="flex justify-between items-center mt-0.5">
+                  <p class="text-xs text-gray-500 truncate">${r.lastMessage.senderId === user._id ? 'You: ' : ''}${r.lastMessage.text}</p>
+                  ${r.unread > 0 ? `<span class="w-5 h-5 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-bold">${r.unread}</span>` : ''}
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        if(data.rooms.length === 0 && !initSeller) {
+            roomsHtml = '<p class="text-gray-500 text-sm text-center mt-10">No messages yet. Start browsing to chat with sellers!</p>';
+        }
+
+        document.getElementById('rooms').innerHTML = roomsHtml;
+        gsap.from('#rooms > div',{y:15,opacity:0,duration:.3,stagger:.06});
+
+        // Initialize direct chat if requested
+        if (initSeller && !currentRoom) {
+            const existingRoom = data.rooms.find(r => r.otherUser.id === initSeller && (r.product ? r.product.id === initProduct : true));
+            if (existingRoom) {
+               const encodedProd = existingRoom.product ? JSON.stringify(existingRoom.product) : null;
+               openRoom(existingRoom.roomId, existingRoom.otherUser.id, existingRoom.otherUser.name, existingRoom.otherUser.avatar, encodedProd);
+            } else {
+               const tempRoomId = `${user._id}_${initSeller}_${initProduct}`;
+               openRoom(tempRoomId, initSeller, 'Seller', 'S', JSON.stringify({id: initProduct, title: 'Item', price: 0, emoji: '📦'}));
+            }
+        }
+    } catch(e) {
+        document.getElementById('rooms').innerHTML = '<p class="text-danger text-sm">Failed to load conversations</p>';
+    }
 }
 
-function openRoom(roomId, name, avatar) {
-  currentRoom = roomId;
-  document.getElementById('roomsList').classList.add('hidden');
-  document.getElementById('chatRoom').classList.remove('hidden');
-  document.getElementById('chatTitle').textContent = name;
-  document.getElementById('chatAvatar').textContent = avatar;
+async function openRoom(roomId, otherUserId, name, avatar, productStr) {
+    if(currentRoom) socket.emit("leave_room", { room_id: currentRoom });
+    
+    currentRoom = roomId;
+    currentReceiver = otherUserId;
+    
+    document.getElementById('roomsList').classList.add('hidden');
+    document.getElementById('chatRoom').classList.remove('hidden');
+    document.getElementById('chatTitle').textContent = name || 'Chat';
+    document.getElementById('chatAvatar').textContent = avatar || '?';
 
-  const room = demoRooms.find(r=>r.id===roomId);
-  if (room?.product) {
-    document.getElementById('productContext').style.display = '';
-    document.getElementById('ctxEmoji').textContent = room.product.emoji;
-    document.getElementById('ctxTitle').textContent = room.product.title;
-    document.getElementById('ctxPrice').textContent = '₹' + room.product.price.toLocaleString('en-IN');
-  }
+    let product = null;
+    if (typeof productStr === 'string' && productStr !== 'null') {
+        try { product = JSON.parse(productStr); } catch(e) {}
+    } else {
+        product = productStr;
+    }
+    
+    currentProduct = product?.id || initProduct;
 
-  renderMessages(demoMessages[roomId] || []);
+    if (product) {
+        document.getElementById('productContext').style.display = '';
+        document.getElementById('ctxEmoji').textContent = product.emoji || '📦';
+        document.getElementById('ctxTitle').textContent = product.title || 'Item';
+        document.getElementById('ctxPrice').textContent = '₹' + (product.price || 0).toLocaleString('en-IN');
+        document.getElementById('productContext').onclick = () => window.location.href = `/user/product.html?id=${product.id}`;
+        document.getElementById('productContext').style.cursor = 'pointer';
+    } else {
+        document.getElementById('productContext').style.display = 'none';
+    }
+
+    socket.emit("join_room", { room_id: currentRoom, user_id: user._id });
+
+    try {
+        const res = await fetch(`${API}/chat/messages/${currentRoom}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        messages[currentRoom] = data.messages || [];
+        renderMessages(messages[currentRoom]);
+        loadRooms(); // refresh unread count
+    } catch(e) {
+        renderMessages([]);
+    }
 }
 
 function renderMessages(msgs) {
   const el = document.getElementById('messagesList');
-  el.innerHTML = msgs.map(m => `
-    <div class="flex ${m.sender==='me'?'justify-end':'justify-start'}">
-      <div class="msg-bubble ${m.sender==='me'?'msg-sent':'msg-received'}">
+  el.innerHTML = msgs.map(m => {
+    const isMe = m.senderId === user._id;
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+    <div class="flex ${isMe?'justify-end':'justify-start'}">
+      <div class="msg-bubble ${isMe?'msg-sent':'msg-received'}">
         <p>${m.text}</p>
-        <div class="text-[10px] ${m.sender==='me'?'text-indigo-200':'text-gray-500'} mt-1 text-right">${m.time} ${m.sender==='me'?'✓✓':''}</div>
+        <div class="text-[10px] ${isMe?'text-indigo-200':'text-gray-500'} mt-1 text-right">${time} ${isMe?(m.read?'✓✓':'✓'):''}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   const container = document.getElementById('messagesContainer');
   container.scrollTop = container.scrollHeight;
 }
@@ -166,33 +247,50 @@ function renderMessages(msgs) {
 function sendMessage() {
   const input = document.getElementById('msgInput');
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !currentRoom) return;
   input.value = '';
 
   const now = new Date();
-  const time = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const msgObj = {
+    room_id: currentRoom,
+    sender_id: user._id,
+    sender_name: user.firstName,
+    receiver_id: currentReceiver,
+    product_id: currentProduct,
+    text: text,
+    timestamp: now.toISOString(),
+    read: false
+  };
 
-  if (!demoMessages[currentRoom]) demoMessages[currentRoom] = [];
-  demoMessages[currentRoom].push({sender:'me',text,time});
-  renderMessages(demoMessages[currentRoom]);
+  if (!messages[currentRoom]) messages[currentRoom] = [];
+  messages[currentRoom].push({
+      senderId: user._id,
+      text: text,
+      timestamp: msgObj.timestamp
+  });
+  renderMessages(messages[currentRoom]);
 
-  // Simulate reply
-  document.getElementById('typingIndicator').classList.remove('hidden');
-  setTimeout(()=>{
-    document.getElementById('typingIndicator').classList.add('hidden');
-    const replies = ['Sure!','Sounds good 👍','Let me check...','I\'ll get back to you','When can you meet?','Deal! 🤝'];
-    const reply = replies[Math.floor(Math.random()*replies.length)];
-    const replyTime = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    demoMessages[currentRoom].push({sender:'other',text:reply,time:replyTime});
-    renderMessages(demoMessages[currentRoom]);
-  },1500+Math.random()*2000);
+  socket.emit("send_message", msgObj);
 }
 
-// Back button override
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&currentRoom){document.getElementById('chatRoom').classList.add('hidden');document.getElementById('roomsList').classList.remove('hidden');currentRoom=null}});
+document.getElementById('msgInput').addEventListener('input', () => {
+    if(currentRoom) socket.emit('typing', { room_id: currentRoom, user_id: user._id });
+});
 
-renderRooms();
-gsap.from('#rooms > div',{y:15,opacity:0,duration:.3,stagger:.06});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&currentRoom){closeRoom()}});
+document.querySelector('nav a').onclick = (e) => {
+    if (currentRoom) { e.preventDefault(); closeRoom(); }
+};
+
+function closeRoom() {
+    socket.emit("leave_room", { room_id: currentRoom });
+    currentRoom = null;
+    currentReceiver = null;
+    document.getElementById('chatRoom').classList.add('hidden');
+    document.getElementById('roomsList').classList.remove('hidden');
+    loadRooms();
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
 </script>
 </body>
 </html>
