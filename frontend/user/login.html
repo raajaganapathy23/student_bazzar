@@ -32,23 +32,24 @@
     --font-brand:'Syne', sans-serif;
   }
 
-  html { height: 100%; }
+  html, body { height: 100%; }
 
   body {
-    min-height: 100%;
+    height: 100vh;
     font-family: var(--font-body);
     background: var(--surface);
     color: var(--ink);
     display: flex;
-    overflow: hidden;
+    overflow: hidden; /* hide horizontal, each panel scrolls independently */
   }
 
   /* ── Left panel ── */
   .panel-brand {
     width: 46%;
-    min-height: 100vh;
+    height: 100vh; /* fixed height so it doesn't grow */
     background: var(--dark);
-    position: relative;
+    position: sticky;
+    top: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -195,12 +196,12 @@
   /* ── Right panel ── */
   .panel-form {
     flex: 1;
-    min-height: 100vh;
+    height: 100vh;        /* exact viewport height */
+    overflow-y: auto;     /* THIS panel scrolls, not the body */
     display: flex;
-    align-items: center;
+    align-items: flex-start;  /* align to top so scroll works */
     justify-content: center;
-    padding: 40px 24px;
-    overflow-y: auto;
+    padding: 60px 24px;   /* generous top/bottom padding */
     background: var(--surface);
     position: relative;
   }
@@ -235,6 +236,7 @@
     position: relative;
     z-index: 1;
     animation: fadeUp .55s cubic-bezier(.22,1,.36,1) both;
+    padding-bottom: 40px; /* ensure last element doesn't clip at bottom */
   }
 
   @keyframes fadeUp {
@@ -528,10 +530,14 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .panel-brand { display: none; }
-    .panel-form { min-height: 100vh; padding: 32px 20px; }
+    .panel-form {
+      height: 100vh;
+      overflow-y: auto;
+      padding: 32px 20px 80px;
+      align-items: flex-start;
+    }
     .mobile-logo { display: flex; }
   }
 </style>
@@ -701,12 +707,12 @@ let authMode = 'register';
 let demoOtp  = '';
 
 // ── Toast ──
-function showToast(msg, type = '') {
+function showToast(msg, type = '', duration = 4000) {
   const t = document.createElement('div');
   t.className = 'toast' + (type ? ' ' + type : '');
   t.textContent = msg;
   document.getElementById('toast-container').appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, duration);
 }
 
 // ── Tab Switch ──
@@ -793,18 +799,58 @@ async function sendOTP() {
     const data = await res.json();
     if (res.ok) {
       demoOtp = data.demo_otp || '';
-      if (demoOtp) showToast(`📋 OTP: ${demoOtp} (demo mode)`, 'success');
-      else          showToast('📱 OTP sent to your phone!', 'success');
+      if (demoOtp) {
+        showToast(`📋 OTP: ${demoOtp} (demo mode)`, 'success', 15000);
+        showDemoBanner(demoOtp);
+      } else {
+        showToast('📱 OTP sent to your phone!', 'success', 5000);
+      }
       revealOtp();
     } else {
-      showToast(data.error || 'Failed to send OTP. Try again.', 'error');
+      showToast(data.error || 'Failed to send OTP. Try again.', 'error', 6000);
     }
   } catch(e) {
     // Offline / backend unreachable — pure demo fallback
     demoOtp = String(Math.floor(100000 + Math.random() * 900000));
-    showToast(`Demo mode — OTP: ${demoOtp}`, 'success');
+    showToast(`📋 Demo OTP: ${demoOtp} — enter this code below`, 'success', 15000);
+    showDemoBanner(demoOtp);
     revealOtp();
   }
+}
+
+// ── Show persistent demo OTP banner inside form ──
+function showDemoBanner(otp) {
+  // Remove any existing banner
+  const existing = document.getElementById('demoBanner');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'demoBanner';
+  banner.style.cssText = `
+    background: #0D2B00;
+    border: 1.5px solid rgba(34,197,94,.5);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: monospace;
+  `;
+  banner.innerHTML = `
+    <div>
+      <div style="font-size:11px;color:#6EE7A0;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">🔑 Demo OTP — Enter this code</div>
+      <div style="font-size:28px;font-weight:800;color:#4ADE80;letter-spacing:.2em">${otp}</div>
+    </div>
+    <button onclick="navigator.clipboard.writeText('${otp}').then(()=>showToast('Copied!','success'))" 
+      style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px 14px;color:#4ADE80;font-size:13px;cursor:pointer">
+      Copy
+    </button>
+  `;
+
+  // Insert banner right above the OTP boxes
+  const otpSection = document.getElementById('otpSection');
+  otpSection.insertBefore(banner, otpSection.firstChild);
 }
 
 // ── Resend OTP ──
